@@ -1,5 +1,7 @@
 import { Container } from "@/components/ui/Section";
 import { MapPinIcon, PhoneIcon, ShieldCheckIcon } from "@/components/icons";
+import { LOKASI } from "@/data/locations";
+import { tautanWhatsApp } from "@/data/kontak";
 
 /**
  * Footer global — zona gelap.
@@ -7,29 +9,17 @@ import { MapPinIcon, PhoneIcon, ShieldCheckIcon } from "@/components/icons";
  * Isinya mengikuti PRD: info halal, kontak cepat, dan 3 titik pengambilan
  * (Pasar / Rumah Produksi / Cikarang).
  *
- * Semua data di bawah masih PLACEHOLDER. Alamat, nomor telepon, dan
- * terutama nomor sertifikat halal harus diganti dengan data asli sebelum
- * situs ini tayang — menampilkan nomor sertifikat karangan justru
- * merusak kepercayaan yang jadi tujuan utama web ini.
+ * Daftar lokasi TIDAK ditulis ulang di sini — ia diambil dari
+ * `src/data/locations.ts`, sumber yang sama dengan pemilih lokasi di
+ * halaman produk. Kalau alamatnya ditulis di dua tempat, cepat atau
+ * lambat keduanya akan berbeda, dan pembeli yang datang ke alamat yang
+ * salah tidak akan kembali.
+ *
+ * Semua data itu masih PLACEHOLDER. Alamat, nomor WhatsApp, dan terutama
+ * nomor sertifikat halal harus diganti dengan data asli sebelum situs ini
+ * tayang — menampilkan nomor sertifikat karangan justru merusak
+ * kepercayaan yang jadi tujuan utama web ini.
  */
-
-const LOKASI = [
-  {
-    nama: "Pasar",
-    alamat: "Alamat lengkap menyusul",
-    jam: "06.00 – 14.00",
-  },
-  {
-    nama: "Rumah Produksi",
-    alamat: "Alamat lengkap menyusul",
-    jam: "08.00 – 17.00",
-  },
-  {
-    nama: "Cikarang",
-    alamat: "Alamat lengkap menyusul",
-    jam: "09.00 – 17.00",
-  },
-];
 
 export function Footer() {
   return (
@@ -67,13 +57,13 @@ export function Footer() {
             </h2>
             <ul className="mt-stack space-y-4">
               {LOKASI.map((lokasi) => (
-                <li key={lokasi.nama} className="flex gap-2.5">
+                <li key={lokasi.id} className="flex gap-2.5">
                   <MapPinIcon className="text-gold-400 mt-0.5 size-5 shrink-0" />
                   <div>
                     <p className="text-on-dark font-medium">{lokasi.nama}</p>
                     <p className="text-sm">{lokasi.alamat}</p>
                     <p className="tabular text-on-dark-muted text-sm">
-                      {lokasi.jam}
+                      {lokasi.jamOperasional}
                     </p>
                   </div>
                 </li>
@@ -91,7 +81,9 @@ export function Footer() {
               lewat WhatsApp.
             </p>
             <a
-              href="#"
+              href={tautanWhatsApp("Halo sekiloo, saya mau bertanya.")}
+              target="_blank"
+              rel="noopener noreferrer"
               className="mt-stack border-ink-500 text-on-dark hover:bg-on-dark/10 inline-flex min-h-11 items-center gap-2 rounded-md border px-4 font-medium transition-colors"
             >
               <PhoneIcon className="size-5" />
