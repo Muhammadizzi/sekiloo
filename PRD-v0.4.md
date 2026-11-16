@@ -121,7 +121,7 @@ Wilayah selain Cikarang, ambil sendiri, akun pembeli, diskon dan kupon, aplikasi
 
 | Halaman | Isi | Fase |
 |---|---|---|
-| Beranda `/` | Hero dengan foto proses pengasapan asli, kartu kloter aktif, katalog singkat, cara kerja PO dalam bahasa pembeli, wilayah dan ongkir, ringkasan halal dan keamanan pangan, FAQ | MVP |
+| Beranda `/` | Hero dengan menu teks tegak (Produk, Kloter, Cara pesan, Ongkir), kartu kloter aktif, katalog singkat, cara kerja PO dalam bahasa pembeli, wilayah dan ongkir, ringkasan halal dan keamanan pangan, FAQ | MVP |
 | Katalog `/produk` dan detail `/produk/[slug]` | Foto, nama, satuan (ekor, pack irisan, bungkus), berat isi, harga, deskripsi, cara simpan | MVP |
 | Keranjang `/keranjang` | Item, subtotal, total berat dibanding sisa kapasitas | MVP |
 | Checkout `/checkout` | Isian di Bagian 6.3, ringkasan biaya, batas waktu bayar | MVP |
@@ -577,7 +577,7 @@ Fitur ini hanya dibangun kalau setelah MVP terbukti dibutuhkan pembeli. Batasan 
 
 ### 19.1 Performa
 - LCP < 3 detik di 4G, JavaScript beranda ≤ 200 kB gzip, dan total beranda termasuk foto ≤ sekitar 1 MB.
-- Hero di MVP berupa foto (lewat `next/image`), bukan video. Video di Fase 2 hanya diputar saat ditekan, ukurannya ≤ 3 MB, dan tidak diputar otomatis untuk pengguna yang mengaktifkan "kurangi gerak". Alasannya biaya: 1.000 kunjungan × 3 MB ≈ 3 GB ≈ 60 dari 300 kredit gratis Netlify per bulan, hanya untuk video.
+- Hero di MVP berupa teks dan menu teks tegak, tanpa foto atau video, jadi layar pertama tidak memuat gambar berat. Foto proses pengasapan asli dipakai di halaman Halal & Keamanan Pangan. Video di Fase 2 hanya diputar saat ditekan, ukurannya ≤ 3 MB, dan tidak diputar otomatis untuk pengguna yang mengaktifkan "kurangi gerak". Alasannya biaya: 1.000 kunjungan × 3 MB ≈ 3 GB ≈ 60 dari 300 kredit gratis Netlify per bulan, hanya untuk video.
 - Leaflet hanya dimuat di checkout, dan script Midtrans hanya di langkah pembayaran.
 - Foto sumber dikompres ke WebP sebelum masuk repo atau storage.
 
@@ -590,7 +590,7 @@ Fitur ini hanya dibangun kalau setelah MVP terbukti dibutuhkan pembeli. Batasan 
   - kartu yang bisa ditekan naik 2 px dengan bayangan saat disorot kursor (hanya di perangkat yang punya hover), dan latarnya menggelap saat ditekan di HP;
   - skeleton dengan kilau (shimmer) saat memuat, bentuknya meniru konten asli dan selalu ditemani teks status.
 - Semua animasi mengikuti setelan "kurangi gerak". Satu-satunya animasi yang berulang adalah kilau skeleton, dan hanya selama data sedang dimuat.
-- Teks tegak sebagai ciri khas (komponen `LabelTegak`): satu label di tepi hero, huruf serif biasa, dibaca dari bawah ke atas searah asap yang naik, dengan garis emas tipis di atasnya. Di bawah 768 px berubah jadi label mendatar di atas judul. Tidak dipakai untuk harga, nama produk, tombol, atau status.
+- Teks tegak sebagai ciri khas (komponen `MenuTegak`): empat kolom menu di hero beranda, dipisah garis emas tipis, dengan nomor 01 sampai 04 di bawah. Kata serif besar diputar dan dibaca dari bawah ke atas, mulai tepat di atas nomornya, jadi ujung atasnya tidak rata seperti asap yang naik. Huruf latin diputar, bukan ditumpuk per huruf seperti kanji, karena tumpukan huruf latin sulit dibaca. Seluruh kolom bisa ditekan. Tidak dipakai untuk harga, nama produk, tombol, atau status.
 - Pekerjaan UI mengikuti aturan antislop di `CLAUDE.md`.
 
 ### 19.3 Aksesibilitas
@@ -656,6 +656,7 @@ Kontras teks memenuhi WCAG AA, target sentuh minimal 44 px, zoom tidak dikunci, 
 | 17 Nov 2026 | Katalog dibaca lewat REST Supabase dengan publishable key dan cache Next.js: produk dan wilayah 5 menit, kloter 1 menit. Kartu kloter juga menyegarkan sisa kapasitas langsung dari browser saat halaman dibuka dan saat pembeli kembali ke tab, dan berganti ke "Pemesanan ditutup" tepat di jam tutupnya |
 | 17 Nov 2026 | Klaim "Bersertifikat Halal" di header dan footer disembunyikan sampai nomor sertifikat asli diisi di `src/data/halal.ts` |
 | 17 Nov 2026 | Hero beranda sementara memakai foto ilustrasi berketerangan "Foto ilustrasi", sampai foto proses pengasapan asli tersedia |
+| 17 Nov 2026 | Menggantikan dua keputusan di atas (label tegak di tepi hero dan foto ilustrasi): teks tegak jadi menu empat kolom di hero beranda, terinspirasi referensi kolom tegak yang dibawa pemilik. Label tegak, keterangan kecil di samping kata, dan foto ilustrasi dihapus |
 
 ---
 

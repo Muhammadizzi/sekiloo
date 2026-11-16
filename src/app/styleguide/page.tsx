@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/Card";
 import { Badge, HalalBadge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { LabelTegak } from "@/components/ui/LabelTegak";
+import { MenuTegak } from "@/components/ui/MenuTegak";
+import { MENU_BERANDA } from "@/data/navigasi";
 import { FotoPlaceholder } from "@/components/produk/FotoPlaceholder";
 import { KartuProduk } from "@/components/produk/KartuProduk";
 import { KartuKloter } from "@/components/kloter/KartuKloter";
@@ -561,24 +562,11 @@ export default function StyleGuidePage() {
         id="teks-tegak"
         tone="sunken"
         title="Teks Tegak"
-        description="Aksen identitas, dibaca dari bawah ke atas searah asap yang naik. Huruf serif biasa, senada dengan wordmark. Hanya untuk satu label di tepi hero, tidak untuk harga, nama produk, tombol, atau status. Di layar sempit otomatis jadi mendatar di atas judul."
+        description="Ciri khas hero beranda: empat kolom menu. Kata dibaca dari bawah ke atas dan mulai tepat di atas nomornya, jadi ujung atasnya tidak rata seperti asap yang naik. Hanya dipakai di hero, tidak untuk harga, nama produk, tombol, atau status."
       >
-        <div className="bg-ink-900 grid gap-5 rounded-lg p-6 md:min-h-80 md:grid-cols-[auto_minmax(0,1fr)] md:gap-10 md:p-10">
-          <LabelTegak>Diasap di desa, diantar ke Cikarang</LabelTegak>
-          <div className="self-center">
-            <h3 className="font-display text-on-dark text-3xl font-semibold md:text-4xl">
-              Ikan asap yang bisa kamu percaya
-            </h3>
-            <p className="text-on-dark-soft mt-3 max-w-xl text-base md:text-lg">
-              Pesan sebelum PO ditutup. Ikan diasap sesuai jumlah pesanan, lalu
-              diantar ke rumahmu di Cikarang.
-            </p>
-          </div>
+        <div className="bg-ink-950 rounded-lg p-6 md:p-10">
+          <MenuTegak label="Contoh menu tegak" item={MENU_BERANDA} className="mx-auto max-w-xl" />
         </div>
-        <p className="text-content-muted mt-3 text-sm">
-          Buka halaman ini di HP, atau perkecil lebar jendela: label pindah ke
-          atas judul dan jadi mendatar.
-        </p>
       </Section>
 
       <Section

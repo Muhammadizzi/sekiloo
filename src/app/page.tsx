@@ -1,15 +1,15 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import { PenyediaGerak } from "@/components/gerak/PenyediaGerak";
 import { KartuKloter } from "@/components/kloter/KartuKloter";
 import { GridProduk } from "@/components/produk/GridProduk";
 import { Button } from "@/components/ui/Button";
-import { LabelTegak } from "@/components/ui/LabelTegak";
+import { MenuTegak } from "@/components/ui/MenuTegak";
 import { PesanKeadaan } from "@/components/ui/PesanKeadaan";
 import { Container } from "@/components/ui/Section";
 import { TombolMuatUlang } from "@/components/ui/TombolMuatUlang";
 import { ambilKloterBuka, ambilProdukAktif, ambilWilayahAktif } from "@/data/katalog";
+import { MENU_BERANDA } from "@/data/navigasi";
 import { formatRupiah } from "@/lib/format";
 
 // Angka terkecil dari data di halaman ini (kloter, 60 detik) yang menentukan umur cache.
@@ -45,12 +45,10 @@ export default async function Beranda() {
 
   return (
     <PenyediaGerak>
-      {/* Hero: zona gelap. Teks tegak di tepi kiri adalah ciri khas yang hanya dipakai di sini. */}
+      {/* Hero: zona gelap. Menu teks tegak adalah ciri khas yang hanya dipakai di sini. */}
       <div className="bg-ink-950">
         <Container>
-          <div className="grid gap-6 py-10 md:grid-cols-[auto_minmax(0,1fr)] md:gap-x-10 md:py-16 lg:grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] lg:items-center lg:gap-x-12">
-            <LabelTegak>Diasap di desa, diantar ke Cikarang</LabelTegak>
-
+          <div className="grid gap-8 py-10 md:py-16 lg:grid-cols-2 lg:items-center lg:gap-12">
             <div>
               <h1 className="text-on-dark text-4xl font-semibold md:text-5xl lg:text-6xl">
                 Pesan dulu, baru kami asap.
@@ -59,41 +57,22 @@ export default async function Beranda() {
                 Ikan diasap sebanyak pesanan yang sudah dibayar, dikemas vakum, lalu diantar ke rumahmu
                 di Cikarang pada tanggal antar kloter.
               </p>
-              <div className="mt-block flex flex-wrap items-center gap-x-6 gap-y-3">
-                <Button href="/produk" size="lg">
-                  Pilih ikan
-                </Button>
-                <a
-                  href="#cara-pesan"
-                  className="text-gold-400 inline-flex min-h-11 items-center font-medium underline-offset-4 hover:underline"
-                >
-                  Cara pesan lewat PO
-                </a>
-              </div>
+              <Button href="/produk" size="lg" className="mt-block">
+                Pilih ikan
+              </Button>
             </div>
 
-            <figure className="md:col-span-2 lg:col-span-1">
-              {/* Lebih pendek di HP supaya kartu kloter di bawahnya lebih cepat terlihat. */}
-              <div className="relative aspect-video overflow-hidden rounded-lg lg:aspect-[4/3]">
-                <Image
-                  src="/hero-sementara.webp"
-                  alt="Ikan asap dalam kemasan vakum di atas daun pisang"
-                  fill
-                  sizes="(min-width: 1152px) 520px, (min-width: 1024px) 42vw, 100vw"
-                  loading="eager"
-                  fetchPriority="high"
-                  className="object-cover"
-                />
-              </div>
-              {/* Ganti dengan foto proses pengasapan asli (PRD Bagian 6.1), lalu hapus keterangan ini. */}
-              <figcaption className="text-on-dark-muted mt-2 text-sm">Foto ilustrasi</figcaption>
-            </figure>
+            <MenuTegak label="Bagian beranda" item={MENU_BERANDA} />
           </div>
         </Container>
       </div>
 
       {/* Kloter: pertanyaan pertama pembeli dari WhatsApp adalah "masih bisa pesan atau tidak". */}
-      <section aria-labelledby="judul-kloter" className="bg-surface-sunken py-section md:py-section-lg">
+      <section
+        id="kloter"
+        aria-labelledby="judul-kloter"
+        className="bg-surface-sunken scroll-mt-16 py-section md:py-section-lg"
+      >
         <Container>
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:gap-12">
             <div>
@@ -161,7 +140,7 @@ export default async function Beranda() {
             </div>
 
             <div>
-              {/* Garis emas tegak menyambung tiap langkah, motif yang sama dengan teks tegak di hero. */}
+              {/* Garis emas tegak menyambung tiap langkah, motif yang sama dengan garis kolom di hero. */}
               <ol>
                 {LANGKAH_PESAN.map((langkah, urutan) => (
                   <li key={langkah.judul} className="group grid grid-cols-[2.5rem_minmax(0,1fr)] gap-x-4">
@@ -188,7 +167,11 @@ export default async function Beranda() {
         </Container>
       </section>
 
-      <section aria-labelledby="judul-wilayah" className="bg-surface py-section md:py-section-lg">
+      <section
+        id="ongkir"
+        aria-labelledby="judul-wilayah"
+        className="bg-surface scroll-mt-16 py-section md:py-section-lg"
+      >
         <Container>
           <div className="grid gap-6 md:grid-cols-2 md:gap-12">
             <div>

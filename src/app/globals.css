@@ -29,6 +29,8 @@
     Arial, "Noto Sans", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
     monospace;
+  /* Nomor besar di menu tegak. Georgia hanya punya angka gaya lama, jadi angka setinggi kapital diambil dari Times. */
+  --font-angka: "Times New Roman", Times, "Noto Serif", serif;
 
   /* ---------------------------------------------------------------
      INK — keluarga gelap hangat (dasar zona bingkai).
