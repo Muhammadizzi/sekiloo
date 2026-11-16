@@ -89,13 +89,18 @@ export function Footer() {
               <PhoneIcon className="size-5" />
               WhatsApp
             </a>
+            {/* Hapus baris ini setelah NOMOR_WHATSAPP di data/kontak.ts
+                diganti nomor asli. */}
+            <p className="text-on-dark-muted mt-2 text-sm">
+              Nomor WhatsApp masih contoh, belum nomor asli.
+            </p>
           </div>
         </div>
 
         <div className="border-ink-700 flex flex-col gap-2 border-t py-6 text-sm sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} sekiloo. Seluruh hak dilindungi.</p>
           <p className="text-on-dark-muted">
-            Pembayaran diproses aman lewat gateway resmi.
+            Pembayaran online menyusul.
           </p>
         </div>
       </Container>

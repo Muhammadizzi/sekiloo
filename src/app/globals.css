@@ -87,8 +87,11 @@
   /* ---------------------------------------------------------------
      STATUS — semuanya sudah lolos AA pada permukaan putih.
      --------------------------------------------------------------- */
-  --color-danger: #b91c1c; /* 6.47:1 */
-  --color-warn: #b45309; /* 5.02:1 */
+  --color-danger: #b91c1c; /* 6.47:1 (5.45:1 di atas danger/10) */
+  /* Warn dipakai di atas latarnya sendiri (badge warn/10, catatan
+     placeholder), bukan hanya di atas putih. Nilai lama #b45309 lolos di
+     putih (5.02:1) tapi jatuh ke 4.39:1 di badge dan 4.20:1 di catatan. */
+  --color-warn: #92400e; /* 7.09:1 putih, 6.08:1 badge, 5.82:1 catatan */
   --color-info: #1d4ed8; /* 6.70:1 */
 
   /* ---------------------------------------------------------------
