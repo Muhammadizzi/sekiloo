@@ -120,6 +120,18 @@
   --shadow-card: 0 1px 2px rgb(12 10 9 / 0.05), 0 1px 3px rgb(12 10 9 / 0.06);
   --shadow-raised: 0 4px 12px rgb(12 10 9 / 0.08), 0 1px 3px rgb(12 10 9 / 0.06);
   --shadow-gold: 0 0 0 1px rgb(201 162 39 / 0.25), 0 8px 24px rgb(201 162 39 / 0.12);
+
+  /* Kilau skeleton bergerak lewat transform, jadi tidak memicu repaint. */
+  --animate-kilau: kilau 1.6s ease-in-out infinite;
+
+  @keyframes kilau {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(100%);
+    }
+  }
 }
 
 /* ==========================================================================

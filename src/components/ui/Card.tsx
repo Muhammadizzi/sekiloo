@@ -20,17 +20,43 @@ const variants: Record<CardVariant, string> = {
   dark: "bg-ink-800 border border-ink-500 text-on-dark",
 };
 
+/* Naik 2px dengan bayangan hanya di perangkat yang punya hover.
+   Di HP, latar menggelap saat tautan di dalamnya ditekan. */
+const interaktif = cn(
+  "relative transition-[translate,box-shadow,border-color,background-color] duration-200 ease-out",
+  "hover:border-line-strong hover:shadow-raised hover:-translate-y-0.5 motion-reduce:hover:translate-y-0",
+  "has-[a:active]:bg-surface-muted",
+  "has-[a:focus-visible]:outline-gold-500 has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2",
+);
+
+/**
+ * Kelas untuk satu tautan di dalam kartu `interactive`. Tautan meregang
+ * menutupi kartu, dan cincin fokusnya pindah ke kartu supaya tidak dobel.
+ */
+export const tautanMeregang =
+  "after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none!";
+
 export function Card({
   variant = "default",
+  interactive = false,
   className,
   children,
 }: {
   variant?: CardVariant;
+  /** Seluruh kartu bisa ditekan. Wajib berisi satu tautan ber-`tautanMeregang`. */
+  interactive?: boolean;
   className?: string;
   children: ReactNode;
 }) {
   return (
-    <div className={cn("rounded-lg", variants[variant], className)}>
+    <div
+      className={cn(
+        "rounded-lg",
+        variants[variant],
+        interactive && interaktif,
+        className,
+      )}
+    >
       {children}
     </div>
   );

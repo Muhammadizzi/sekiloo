@@ -53,7 +53,9 @@ const sizes: Record<Size, string> = {
 const shared = cn(
   "inline-flex items-center justify-center rounded-md",
   "cursor-pointer select-none",
-  "transition-colors duration-150",
+  "transition-[background-color,border-color,color,opacity,scale] duration-150 ease-out",
+  // Mengecil 3% saat ditekan: umpan balik sentuh di HP, yang tidak punya hover.
+  "active:scale-[0.97] motion-reduce:active:scale-100",
   "touch-manipulation", // hilangkan jeda 300ms di browser HP
   "disabled:pointer-events-none disabled:opacity-50",
 );

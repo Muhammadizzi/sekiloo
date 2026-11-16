@@ -570,7 +570,12 @@ Fitur ini hanya dibangun kalau setelah MVP terbukti dibutuhkan pembeli. Batasan 
 ### 19.2 Tampilan dan gerak
 - Mobile-first, karena sebagian besar pembeli membuka link dari WhatsApp di HP.
 - Warna Dapur Asap dari `src/app/globals.css`. Hijau dipakai khusus untuk penanda halal.
-- Framer Motion untuk kartu produk yang muncul saat digulir (sudah ada) dan bar kapasitas kloter. Semua animasi mengikuti setelan "kurangi gerak", dan tidak ada animasi yang berulang terus-menerus.
+- Framer Motion dipakai untuk kartu produk yang muncul saat digulir (sudah ada) dan bar kapasitas kloter.
+- Efek kecil yang sering muncul dibuat dengan CSS supaya tidak menambah JavaScript (komponen di `src/components/ui/`, contohnya di `/styleguide`):
+  - tombol mengecil 3% saat ditekan, sebagai umpan balik sentuh di HP;
+  - kartu yang bisa ditekan naik 2 px dengan bayangan saat disorot kursor (hanya di perangkat yang punya hover), dan latarnya menggelap saat ditekan di HP;
+  - skeleton dengan kilau (shimmer) saat memuat, bentuknya meniru konten asli dan selalu ditemani teks status.
+- Semua animasi mengikuti setelan "kurangi gerak". Satu-satunya animasi yang berulang adalah kilau skeleton, dan hanya selama data sedang dimuat.
 - Pekerjaan UI mengikuti aturan antislop di `CLAUDE.md`.
 
 ### 19.3 Aksesibilitas
@@ -623,6 +628,7 @@ Kontras teks memenuhi WCAG AA, target sentuh minimal 44 px, zoom tidak dikunci, 
 | 17 Nov 2026 | Role admin di tabel `admin_roles` terpisah, 2FA wajib |
 | 17 Nov 2026 | Notifikasi WhatsApp di MVP manual, tidak memakai gateway tidak resmi |
 | 17 Nov 2026 | Urutan pengerjaan: MVP, lalu Fase 2 (testimoni, artikel, WhatsApp resmi), lalu Fase 3 (AI Deteksi) |
+| 17 Nov 2026 | Animasi tombol, hover kartu, dan skeleton shimmer dibuat dengan CSS. Framer Motion hanya untuk animasi masuk dan bar kapasitas |
 | 17 Nov 2026 | Keamanan operasional dan daftar cek sebelum rilis ditambahkan (Bagian 14.3 dan 14.4): captcha sejak MVP, batas bayar 15 menit, berat maksimal per pesanan, foto bukti di bucket privat, 2FA di semua akun layanan |
 
 ---

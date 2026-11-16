@@ -1,8 +1,17 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Section, Container } from "@/components/ui/Section";
 import { Button } from "@/components/ui/Button";
-import { Card, CardBody, CardTitle, CardText } from "@/components/ui/Card";
+import {
+  Card,
+  CardBody,
+  CardTitle,
+  CardText,
+  tautanMeregang,
+} from "@/components/ui/Card";
 import { Badge, HalalBadge } from "@/components/ui/Badge";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { FotoPlaceholder } from "@/components/produk/FotoPlaceholder";
 import {
   CheckIcon,
   LeafIcon,
@@ -301,7 +310,7 @@ export default function StyleGuidePage() {
       <Section
         tone="sunken"
         title="Tombol"
-        description="Varian dinamai per zona, karena satu warna garis tidak mungkin terbaca di latar terang dan gelap sekaligus."
+        description="Varian dinamai per zona, karena satu warna garis tidak mungkin terbaca di latar terang dan gelap sekaligus. Saat ditekan, tombol mengecil sedikit sebagai umpan balik sentuh."
       >
         <Card>
           <CardBody>
@@ -456,8 +465,50 @@ export default function StyleGuidePage() {
         </div>
       </Section>
 
+      <Section
+        tone="light"
+        title="Interaksi & Memuat"
+        description="Dibuat dengan CSS, jadi tidak menambah JavaScript. Semua gerakan berhenti kalau pengguna mengaktifkan kurangi gerak di HP-nya."
+      >
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <Card interactive>
+            <div className="border-line aspect-[4/3] overflow-hidden rounded-t-lg border-b">
+              <FotoPlaceholder label="Foto produk" />
+            </div>
+            <CardBody>
+              <CardTitle as="h3">
+                <Link href="/produk/ikan-patin-asap" className={tautanMeregang}>
+                  Kartu yang bisa ditekan
+                </Link>
+              </CardTitle>
+              <CardText>
+                Saat disorot kursor, kartu naik sedikit dan bayangannya menebal.
+                Di HP, latarnya menggelap saat ditekan. Tautan ini membuka
+                halaman detail Ikan Patin Asap.
+              </CardText>
+            </CardBody>
+          </Card>
+
+          <div>
+            <div className="border-line bg-surface overflow-hidden rounded-lg border">
+              <Skeleton className="border-line aspect-[4/3] w-full border-b" />
+              <div className="p-block space-y-3">
+                <Skeleton className="h-6 w-3/4 rounded-xs" />
+                <Skeleton className="h-4 w-full rounded-xs" />
+                <Skeleton className="h-4 w-2/3 rounded-xs" />
+              </div>
+            </div>
+            <p className="text-content-muted mt-3 text-sm">
+              Kerangka saat memuat, dengan bentuk yang sama seperti kartu di
+              sebelahnya. Di halaman asli selalu ditemani teks status, misalnya
+              &ldquo;Memuat daftar produk&hellip;&rdquo;.
+            </p>
+          </div>
+        </div>
+      </Section>
+
       {/* ============ CATATAN ============ */}
-      <Section tone="light" title="Yang belum dikerjakan">
+      <Section tone="sunken" title="Yang belum dikerjakan">
         <Card variant="raised">
           <CardBody>
             <ul className="text-content-soft space-y-2.5">
