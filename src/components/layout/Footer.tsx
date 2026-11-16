@@ -2,6 +2,7 @@ import { Container } from "@/components/ui/Section";
 import { PhoneIcon, ShieldCheckIcon } from "@/components/icons";
 import { tautanWhatsApp } from "@/data/kontak";
 import { NOMOR_SERTIFIKAT_HALAL } from "@/data/halal";
+import { Wordmark } from "./Wordmark";
 
 /** Footer global, zona gelap. Dua kolom karena isinya memang hanya dua: siapa kami dan cara menghubungi. */
 export function Footer() {
@@ -10,11 +11,8 @@ export function Footer() {
       <Container>
         <div className="py-section grid gap-10 md:grid-cols-2 md:gap-8">
           <div>
-            <p className="font-display text-on-dark text-2xl font-semibold">
-              sekiloo
-              <span className="text-gold-400" aria-hidden>
-                .
-              </span>
+            <p className="text-on-dark text-2xl">
+              <Wordmark />
             </p>
             <p className="mt-stack max-w-sm text-base">
               Ikan asap produksi desa, dipesan per kloter dan diantar ke rumah di Cikarang.
@@ -37,7 +35,7 @@ export function Footer() {
               Tanya soal produk, jadwal kloter, atau pesananmu lewat WhatsApp.
             </p>
             <a
-              href={tautanWhatsApp("Halo sekiloo, saya mau bertanya.")}
+              href={tautanWhatsApp("Halo Sealauk, saya mau bertanya.")}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-stack border-ink-500 text-on-dark hover:bg-on-dark/10 inline-flex min-h-11 items-center gap-2 rounded-md border px-4 font-medium transition-colors"
@@ -51,7 +49,7 @@ export function Footer() {
         </div>
 
         <div className="border-ink-700 border-t py-6 text-sm">
-          <p>© {new Date().getFullYear()} sekiloo</p>
+          <p>© {new Date().getFullYear()} Sealauk</p>
         </div>
       </Container>
     </footer>

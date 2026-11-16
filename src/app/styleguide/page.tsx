@@ -28,7 +28,7 @@ import {
 
 export const metadata: Metadata = {
   title: "Panduan Gaya",
-  description: "Halaman sementara untuk meninjau design system sekiloo.",
+  description: "Halaman sementara untuk meninjau design system Sealauk.",
 };
 
 /* Data contoh. Waktu dibuat tetap supaya keadaan "buka" dan "ditutup" tidak berubah sendiri setelah build. */
@@ -132,7 +132,7 @@ export default function StyleGuidePage() {
             <Badge tone="onDark">Halaman sementara untuk review</Badge>
             <h1 className="text-on-dark mt-block text-4xl font-semibold md:text-6xl">
               Fondasi desain{" "}
-              <span className="text-gold-400">sekiloo</span>
+              <span className="text-gold-400">Sealauk</span>
             </h1>
             <p className="text-on-dark-soft mt-stack text-lg md:text-xl">
               Gelap dan emas dipakai sebagai bingkai. Begitu masuk ke area

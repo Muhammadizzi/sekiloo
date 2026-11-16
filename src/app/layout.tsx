@@ -15,8 +15,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "sekiloo · Ikan asap PO, diantar di Cikarang",
-    template: "%s · sekiloo",
+    default: "Sealauk · Ikan asap PO, diantar di Cikarang",
+    template: "%s · Sealauk",
   },
   description:
     "Pesan ikan asap per kloter, diasap sesuai pesanan, lalu diantar ke rumahmu di Cikarang.",

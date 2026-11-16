@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Container } from "@/components/ui/Section";
 import { ShieldCheckIcon } from "@/components/icons";
 import { NOMOR_SERTIFIKAT_HALAL } from "@/data/halal";
+import { Wordmark } from "./Wordmark";
 
 /**
  * Header global, zona gelap. Ringkas (56px di HP) karena ruang vertikal di layar kecil mahal.
@@ -12,14 +13,8 @@ export function Header() {
     <header className="bg-ink-900 border-ink-700 sticky top-0 z-40 border-b">
       <Container>
         <div className="flex h-14 items-center justify-between gap-3 md:h-16">
-          <Link
-            href="/"
-            className="font-display text-on-dark text-2xl leading-none font-semibold tracking-tight md:text-3xl"
-          >
-            sekiloo
-            <span className="text-gold-400" aria-hidden>
-              .
-            </span>
+          <Link href="/" className="text-on-dark text-2xl md:text-3xl">
+            <Wordmark />
             <span className="sr-only">, ke beranda</span>
           </Link>
 

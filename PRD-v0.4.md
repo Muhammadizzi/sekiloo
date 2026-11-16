@@ -1,4 +1,4 @@
-# PRD v0.4: sekiloo, Jastip PO Ikan Asap Cikarang
+# PRD v0.4: Sealauk, Jastip PO Ikan Asap Cikarang
 
 **Versi:** 0.4
 **Tanggal:** 17 November 2026
@@ -26,7 +26,7 @@
 
 ## 1. Latar Belakang & Tujuan
 
-sekiloo menjual ikan asap produksi desa kepada pembeli di Cikarang lewat sistem jastip pre-order. Pesanan dikumpulkan per kloter, ikan diasap dan divakum sesuai jumlah pesanan yang sudah dibayar, dibawa ke Cikarang dalam cool box, lalu diantar ke rumah pembeli.
+Sealauk menjual ikan asap produksi desa kepada pembeli di Cikarang lewat sistem jastip pre-order. Pesanan dikumpulkan per kloter, ikan diasap dan divakum sesuai jumlah pesanan yang sudah dibayar, dibawa ke Cikarang dalam cool box, lalu diantar ke rumah pembeli.
 
 Banyak konsumen ragu membeli ikan asap karena khawatir soal kebersihan, kehalalan, dan kesegarannya. Untuk produk yang menempuh perjalanan dari desa, keraguan soal kesegaran makin besar. Web ini dibuat untuk menjawab keraguan itu sekaligus mempermudah pemesanan.
 
@@ -165,7 +165,7 @@ Aturan:
 - Isi: nomor invoice, urutan status, item, total, tanggal antar, kecamatan, alamat tersamar, tombol lanjut bayar (kalau belum lunas), tombol simpan link ke WhatsApp, tombol hubungi admin.
 - Nomor HP ditampilkan tersamar (0812****7890) dan alamat hanya sebagian, karena link bisa saja diteruskan ke orang lain. Halaman diberi `noindex`.
 - Halaman memakai header `Referrer-Policy: no-referrer`, supaya token di URL tidak ikut terkirim ke situs lain saat pembeli menekan link keluar.
-- Menampilkan nomor WhatsApp resmi sekiloo beserta peringatan anti-penipuan (Bagian 14.3).
+- Menampilkan nomor WhatsApp resmi Sealauk beserta peringatan anti-penipuan (Bagian 14.3).
 - Status lunas dibaca dari database hasil webhook, bukan dari parameter redirect Midtrans.
 
 ### 6.5 Cek Pesanan
@@ -362,7 +362,7 @@ Angka suhu dan masa simpan hanya boleh diambil dari uji ketahanan produk, bukan 
 | `products` | `id`, `slug`, `name`, `category` (`ikan` / `kepala` / `jeroan` / `telur` / `pendamping`), `description`, `unit_type` (`ekor` / `pack_irisan` / `bungkus`), `net_weight_gram`, `ship_weight_gram`, `price`, `image_path`, `is_active`, `sort_order` | `price` dalam rupiah bulat, sudah termasuk kemasan vakum. Harga dan berat boleh kosong selama produk nonaktif. Produk baru bisa diaktifkan setelah `price`, `net_weight_gram`, dan `ship_weight_gram` terisi |
 | `service_areas` | `id`, `name`, `delivery_fee`, `center_lat`, `center_lng`, `is_active`, `sort_order` | Isi awal: Cikarang Utara, Barat, Selatan, Timur, Pusat. `delivery_fee` boleh kosong selama nonaktif. Wilayah baru bisa diaktifkan setelah ongkir terisi |
 | `po_batches` | `id`, `name`, `close_order_at`, `delivery_date`, `capacity_gram`, `max_order_weight_gram`, `min_weight_gram` (default 3000), `min_orders` (default 5), `status`, `cancel_reason`, `change_reason`, `created_by`, `created_at` | Maksimal satu kloter `open`. Kolom `status` tidak bisa diubah langsung, hanya lewat fungsi |
-| `orders` | `id`, `invoice_number`, `status_token`, `batch_id`, `buyer_name`, `buyer_phone`, `recipient_name`, `recipient_phone`, `area_id`, `address_text`, `address_note`, `lat`, `lng`, `subtotal`, `delivery_fee`, `total_amount`, `total_weight_gram`, `payment_status`, `order_status`, `cancel_reason`, `cancel_note`, `expires_at`, `paid_at`, `shipped_at`, `arrived_at`, `delivered_at`, `delivery_attempts`, `proof_photo_path`, `consent_at`, `created_at` | `status_token` acak 128 bit dan unik. Format invoice `SKL-YYMMDD-NNNN` |
+| `orders` | `id`, `invoice_number`, `status_token`, `batch_id`, `buyer_name`, `buyer_phone`, `recipient_name`, `recipient_phone`, `area_id`, `address_text`, `address_note`, `lat`, `lng`, `subtotal`, `delivery_fee`, `total_amount`, `total_weight_gram`, `payment_status`, `order_status`, `cancel_reason`, `cancel_note`, `expires_at`, `paid_at`, `shipped_at`, `arrived_at`, `delivered_at`, `delivery_attempts`, `proof_photo_path`, `consent_at`, `created_at` | `status_token` acak 128 bit dan unik. Format invoice `SLK-YYMMDD-NNNN` |
 | `order_items` | `id`, `order_id`, `product_id`, `quantity`, `price_at_purchase`, `ship_weight_at_purchase_gram` | Harga dan berat dicatat saat pesan |
 | `payments` | `id`, `order_id`, `invoice_number`, `transaction_id`, `transaction_status`, `fraud_status`, `payment_type`, `gross_amount`, `transaction_time`, `outcome`, `raw_payload`, `received_at` | Unik pada (`transaction_id`, `transaction_status`) untuk idempotensi. `outcome` mencatat hasil pemrosesan, termasuk notifikasi yang ditolak |
 | `refunds` | `id`, `order_id`, `amount`, `reason`, `status` (`pending` / `done`), `proof_path`, `processed_by`, `processed_at` | Tanpa nomor rekening pembeli |
@@ -472,9 +472,9 @@ Prinsipnya: browser dan APK tidak pernah dipercaya untuk harga, ongkir, kapasita
 | Registrar domain | [menunggu] | Belum |
 | Email yang dipakai untuk akun-akun di atas | [menunggu] | Belum |
 
-**Pencegahan penipuan lewat WhatsApp.** Refund manual membuka dua celah: orang lain mengaku sebagai pembeli dan meminta refund ke rekeningnya, atau penipu mengaku admin sekiloo dan meminta kode OTP atau "biaya refund" ke pembeli. Karena itu:
+**Pencegahan penipuan lewat WhatsApp.** Refund manual membuka dua celah: orang lain mengaku sebagai pembeli dan meminta refund ke rekeningnya, atau penipu mengaku admin Sealauk dan meminta kode OTP atau "biaya refund" ke pembeli. Karena itu:
 - Refund hanya dimulai oleh admin, dan hanya lewat nomor WhatsApp yang tercatat di pesanan.
-- Nomor WhatsApp resmi sekiloo ditulis di footer web, halaman status, dan Syarat Pemesanan, bersama kalimat: "Admin sekiloo tidak pernah meminta kode OTP, PIN, password, atau biaya apa pun untuk refund."
+- Nomor WhatsApp resmi Sealauk ditulis di footer web, halaman status, dan Syarat Pemesanan, bersama kalimat: "Admin Sealauk tidak pernah meminta kode OTP, PIN, password, atau biaya apa pun untuk refund."
 
 **Ketersediaan.** Di paket gratis Netlify, seluruh web di-pause kalau kredit bulanan habis, jadi spam permintaan saja sudah bisa mematikan toko. Captcha dan batas permintaan di Bagian 14.2 sekaligus melindungi kredit. Pemakaian kredit dipantau setiap minggu, dan paket dinaikkan ke berbayar sebelum mendekati 300 kredit.
 
@@ -533,7 +533,7 @@ Bagian ini adalah alasan utama web ini dibuat.
 
 Aturan:
 - Persetujuan diminta di checkout (centang) dan waktunya dicatat di `consent_at`.
-- Halaman Kebijakan Privasi menjelaskan data apa yang dikumpulkan, untuk apa, siapa yang memprosesnya (sekiloo dan Midtrans), berapa lama disimpan, dan cara meminta penghapusan.
+- Halaman Kebijakan Privasi menjelaskan data apa yang dikumpulkan, untuk apa, siapa yang memprosesnya (Sealauk dan Midtrans), berapa lama disimpan, dan cara meminta penghapusan.
 - Usulan masa simpan: 12 bulan setelah pesanan selesai. Setelah itu nama, nomor, alamat, dan koordinat dianonimkan, sementara data transaksi tanpa identitas tetap disimpan (Bagian 23).
 - Permintaan hapus data diterima lewat WhatsApp dan diproses `admin_produksi`.
 - Halaman status menyamarkan nomor HP dan alamat.
@@ -657,6 +657,7 @@ Kontras teks memenuhi WCAG AA, target sentuh minimal 44 px, zoom tidak dikunci, 
 | 17 Nov 2026 | Klaim "Bersertifikat Halal" di header dan footer disembunyikan sampai nomor sertifikat asli diisi di `src/data/halal.ts` |
 | 17 Nov 2026 | Hero beranda sementara memakai foto ilustrasi berketerangan "Foto ilustrasi", sampai foto proses pengasapan asli tersedia |
 | 17 Nov 2026 | Menggantikan dua keputusan di atas (label tegak di tepi hero dan foto ilustrasi): teks tegak jadi menu empat kolom di hero beranda, terinspirasi referensi kolom tegak yang dibawa pemilik. Label tegak, keterangan kecil di samping kata, dan foto ilustrasi dihapus |
+| 17 Nov 2026 | Nama usaha berganti dari sekiloo ke Sealauk (dibaca Si-lauk): seal (segel vakum) dan lauk. Awalan invoice ikut berganti dari `SKL-` ke `SLK-` lewat migrasi `ganti_nama_sealauk`. Logo dan font dibuat pemilik |
 
 ---
 
@@ -688,12 +689,15 @@ Kontras teks memenuhi WCAG AA, target sentuh minimal 44 px, zoom tidak dikunci, 
 **Akun dan perangkat:**
 16. QRIS saja, atau ditambah Virtual Account?
 17. Pemilik akun Midtrans dan kesiapan dokumen usaha untuk aktivasi produksi.
-18. Nama domain.
+18. Nama domain. Per 17 Nov 2026 sealauk.com, sealauk.id, dan silauk.com masih kosong. Usulan: ambil sealauk.com atau sealauk.id sebagai domain utama, dan silauk.com diarahkan ke situ untuk yang mengetik sesuai bunyinya. Cek juga merek "Sealauk" di PDKI (pdki-indonesia.dgip.go.id) sebelum mencetak label.
 19. Siapa memegang HP admin, dan siapa cadangannya kalau HP hilang atau rusak.
 
 **Keamanan:**
 20. Berat maksimal per pesanan (`max_order_weight_gram`).
 21. Pemegang tiap akun layanan dan penanggung jawab insiden kebocoran data (Bagian 14.3).
+
+**Merek:**
+22. Logo dan font merek: dibuat pemilik. Sementara nama tampil sebagai teks serif di komponen `Wordmark`, dan font judul diatur di `--font-display` pada `src/app/globals.css`.
 
 ---
 

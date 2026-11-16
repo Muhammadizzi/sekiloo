@@ -101,7 +101,7 @@ begin
   r := r || pg_temp.cek('16a dibayar setelah batal', public.apply_payment_notification(o2.invoice_number, 'trx-2b', 'settlement', 50000, now(), '{}'), 'perlu_refund');
   select count(*) into v_n from public.refunds where order_id = o2.order_id and status = 'pending';
   r := r || pg_temp.cek('16b refund tercatat', v_n::text, '1');
-  r := r || pg_temp.cek('17 invoice tidak dikenal', public.apply_payment_notification('SKL-000000-9999', 'trx-x', 'settlement', 1, now(), '{}'), 'pesanan_tidak_ditemukan');
+  r := r || pg_temp.cek('17 invoice tidak dikenal', public.apply_payment_notification('SLK-000000-9999', 'trx-x', 'settlement', 1, now(), '{}'), 'pesanan_tidak_ditemukan');
 
   select * into o3 from public.create_order(v_batch, jsonb_build_array(jsonb_build_object('product_id', v_b, 'quantity', 1)), v_area, 'Pembeli Empat', '6281200000050', 'Jl. Uji Nomor 50, Cikarang', -6.27, 107.15, true);
   r := r || pg_temp.cek('18a transaksi dibuat lewat batas bayar', public.apply_payment_notification(o3.invoice_number, 'trx-3', 'settlement', 30000, now() + interval '20 minutes', '{}'), 'perlu_refund');
