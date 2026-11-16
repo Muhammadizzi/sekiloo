@@ -27,7 +27,7 @@ export function AksiPembelian() {
   const stok = statusStok(
     rincian.stok,
     product.ambangStokMenipis,
-    product.satuanStok,
+    product.satuan,
   );
 
   /* Stok dihitung per zona: memilih Cikarang berarti membaca tumpukan

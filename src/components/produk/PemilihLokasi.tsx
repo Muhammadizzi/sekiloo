@@ -40,7 +40,7 @@ export function PemilihLokasi() {
   const stok = statusStok(
     rincian.stok,
     product.ambangStokMenipis,
-    product.satuanStok,
+    product.satuan,
   );
 
   return (
@@ -113,7 +113,7 @@ export function PemilihLokasi() {
 
             `aria-live="polite"` membungkus NAMA LOKASI, HARGA, dan STATUS
             STOK sekaligus, supaya pembaca layar mendengar kalimat utuh
-            ("Harga di Cikarang, Rp 52.000, stok menipis — sisa 4 pack")
+            ("Harga di Cikarang, Rp 52.000, stok menipis: sisa 4 pack")
             setelah pilihan berubah, bukan angka telanjang yang tidak jelas
             milik lokasi mana. Fokus keyboard tetap tinggal di radio.
 

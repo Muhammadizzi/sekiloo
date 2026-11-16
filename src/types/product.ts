@@ -16,6 +16,9 @@
  * 3. Semua yang berhubungan dengan klaim (gizi, halal, masa simpan) punya
  *    tempat khusus untuk sumber/rujukan. Klaim tanpa sumber adalah utang
  *    yang ditagih tepat saat pembeli paling teliti membaca.
+ * 4. Aturan yang bisa dijamin kompilator, dijamin kompilator — bukan
+ *    diserahkan ke kedisiplinan orang yang mengisi data. Lihat bagian
+ *    KATEGORI & CARA JUAL di bawah untuk contoh terjelasnya.
  */
 
 /* ==========================================================================
@@ -176,10 +179,90 @@ export interface InfoPenyimpanan {
   catatan: string[];
 }
 
-/* ---------------------------------------------------------------
+/* ==========================================================================
+   KATEGORI & CARA JUAL
+   ==========================================================================
+
+   Empat kategori, dan SATU pengecualian yang perlu dipahami sebelum
+   membaca tipe `Product` di bawah:
+
+     ikan    → punya pembagian CARA JUAL: 'potongan' atau 'satuan' (utuh).
+     kepala  ┐
+     jeroan  ├→ TIDAK punya pembagian cara jual sama sekali.
+     telur   ┘
+
+   Semua produk — tanpa kecuali — dihargai TETAP PER UNIT (per pack, per
+   potong, per ekor), bukan per berat. Karena itu model harga integer per
+   zona di atas tetap berlaku apa adanya: satu angka, satu unit.
+   ========================================================================== */
+export type KategoriId = "ikan" | "kepala" | "jeroan" | "telur";
+
+/**
+ * Pembagian cara jual. HANYA berlaku untuk kategori 'ikan'.
+ *
+ *   potongan → dijual sebagai potongan/fillet, biasanya per pack.
+ *   satuan   → dijual utuh, per ekor.
+ */
+export type CaraJual = "potongan" | "satuan";
+
+/**
+ * Satuan yang tampil di belakang harga: "Rp 44.000 / ekor".
+ *
+ * Ini juga satuan STOK ("sisa 4 ekor") — sengaja satu field, bukan dua.
+ * Kalau satuan harga dan satuan stok disimpan terpisah, cepat atau lambat
+ * salah satunya diperbarui sendirian dan halaman menampilkan
+ * "Rp 46.000 / ekor … sisa 4 pack" untuk barang yang sama.
+ */
+export type SatuanJual = "ekor" | "potong" | "pack";
+
+export interface Kategori {
+  id: KategoriId;
+  /** Judul bagian di katalog, mis. "Kepala Ikan Asap". */
+  nama: string;
+  /** Versi pendek untuk pintasan/chip navigasi, mis. "Kepala". */
+  namaSingkat: string;
+  /** Satu kalimat di bawah judul bagian. */
+  keterangan: string;
+}
+
+export interface InfoCaraJual {
+  id: CaraJual;
+  /** Sub-judul di dalam bagian Ikan, mis. "Dijual utuh — per ekor". */
+  nama: string;
+  /** Penanda ringkas di kartu produk, mis. "Utuh / per ekor". */
+  penanda: string;
+  keterangan: string;
+}
+
+/* ==========================================================================
    PRODUK
-   --------------------------------------------------------------- */
-export interface Product {
+   ==========================================================================
+
+   Bentuknya union, bukan satu interface dengan field opsional, dan itu
+   disengaja.
+
+   Kalau `caraJual` ditulis sebagai field opsional biasa pada satu
+   interface, tidak ada yang mencegah seseorang menulis:
+
+       { kategori: "telur", caraJual: "potongan" }   ← tidak ada artinya
+
+   dan TypeScript akan diam saja. Dengan union berdiskriminan di bawah,
+   baris itu GAGAL KOMPILASI: `caraJual?: never` pada varian non-ikan
+   membuat field itu mustahil diisi di luar kategori 'ikan'. Sebaliknya,
+   produk berkategori 'ikan' WAJIB menyebut cara jualnya — tidak bisa
+   lupa.
+
+   Satuannya ikut dikunci ke cara jual, karena keduanya memang tidak
+   bebas satu sama lain: ikan yang dijual utuh dihargai per ekor, titik.
+   Menuliskan "Rp 46.000 / pack" untuk seekor bandeng utuh bukan cuma
+   janggal — pembeli jadi tidak tahu ia dapat berapa ekor.
+
+   Untuk menambah kategori baru nanti: tambahkan ke `KategoriId`, lalu
+   kompilator akan menunjuk sendiri setiap tempat yang perlu disesuaikan.
+   ========================================================================== */
+
+/** Bagian yang sama untuk SEMUA kategori. */
+interface ProdukDasar {
   id: string;
   /** Dipakai sebagai URL: /produk/{slug}. Huruf kecil, tanpa spasi. */
   slug: string;
@@ -205,11 +288,39 @@ export interface Product {
    */
   zona: ZonaProduk;
 
-  /** Satuan stok, mis. "pack". Dipakai di kalimat "sisa 4 pack". */
-  satuanStok: string;
   /** Di bawah atau sama dengan angka ini, stok ditandai "menipis". Berlaku per zona. */
   ambangStokMenipis: number;
 
   pengasapan: InfoPengasapan;
   penyimpanan: InfoPenyimpanan;
 }
+
+/** Ikan yang dijual utuh. Selalu dihargai per ekor. */
+export interface ProdukIkanUtuh extends ProdukDasar {
+  kategori: "ikan";
+  caraJual: "satuan";
+  satuan: "ekor";
+}
+
+/** Ikan yang dijual sebagai potongan — per potong, atau per pack berisi beberapa potong. */
+export interface ProdukIkanPotongan extends ProdukDasar {
+  kategori: "ikan";
+  caraJual: "potongan";
+  satuan: "potong" | "pack";
+}
+
+export type ProdukIkan = ProdukIkanUtuh | ProdukIkanPotongan;
+
+/**
+ * Kepala, jeroan, dan telur ikan.
+ *
+ * `caraJual?: never` bukan gaya penulisan — itulah yang membuat
+ * pembagian potongan/satuan MUSTAHIL bocor ke kategori ini.
+ */
+export interface ProdukTurunanIkan extends ProdukDasar {
+  kategori: Exclude<KategoriId, "ikan">;
+  caraJual?: never;
+  satuan: SatuanJual;
+}
+
+export type Product = ProdukIkan | ProdukTurunanIkan;

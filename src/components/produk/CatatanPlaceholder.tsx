@@ -44,7 +44,7 @@ export function CatatanPlaceholder({
           <path d="M12 4 2.5 20h19L12 4Z" />
           <path d="M12 10v4.5M12 17.2v.1" />
         </svg>
-        <span>Catatan untuk pemilik — {judul}</span>
+        <span>Catatan untuk pemilik: {judul}</span>
       </p>
       <div className="text-content-soft mt-2 space-y-1.5 pl-7 text-sm">
         {children}

@@ -128,13 +128,13 @@ export function statusStok(
   if (stok <= ambang) {
     return {
       tone: "warn",
-      teks: `Stok menipis — sisa ${stok} ${satuan}`,
+      teks: `Stok menipis: sisa ${stok} ${satuan}`,
       bisaBeli: true,
     };
   }
   return {
     tone: "halal",
-    teks: `Tersedia — ${stok} ${satuan} siap ambil`,
+    teks: `Tersedia: ${stok} ${satuan} siap ambil`,
     bisaBeli: true,
   };
 }

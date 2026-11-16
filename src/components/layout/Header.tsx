@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Container } from "@/components/ui/Section";
-import { CartIcon, ShieldCheckIcon } from "@/components/icons";
+import { ShieldCheckIcon } from "@/components/icons";
 
 /**
  * Header global — zona gelap.
@@ -9,10 +9,11 @@ import { CartIcon, ShieldCheckIcon } from "@/components/icons";
  * ruang vertikal di layar 375px sangat mahal. Navigasi lengkap sebaiknya
  * nanti pindah ke bottom nav atau menu, bukan menumpuk di sini.
  *
- * Keranjang sudah disiapkan sebagai tombol dengan slot jumlah item,
- * tapi belum terhubung ke state apa pun — itu pekerjaan tahap berikutnya.
+ * Satu-satunya tautan navigasi adalah Produk, karena itulah satu-satunya
+ * halaman tujuan yang sudah ada. Tautan lain ditambahkan begitu
+ * halamannya dibuat, bukan sebelumnya.
  */
-export function Header({ cartCount = 0 }: { cartCount?: number }) {
+export function Header() {
   return (
     <header className="bg-ink-900 border-b border-ink-700 sticky top-0 z-40">
       <Container>
@@ -28,7 +29,7 @@ export function Header({ cartCount = 0 }: { cartCount?: number }) {
             <span className="text-gold-400" aria-hidden>
               .
             </span>
-            <span className="sr-only">— beranda</span>
+            <span className="sr-only"> (beranda)</span>
           </Link>
 
           <div className="flex items-center gap-2">
@@ -39,26 +40,19 @@ export function Header({ cartCount = 0 }: { cartCount?: number }) {
               Bersertifikat Halal
             </span>
 
-            {/* Area sentuh 44px penuh, walau ikonnya kecil. */}
-            <button
-              type="button"
-              className="text-on-dark hover:bg-on-dark/10 active:bg-on-dark/20 relative inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-2 rounded-md px-3 transition-colors"
-              aria-label={
-                cartCount > 0
-                  ? `Keranjang, ${cartCount} item`
-                  : "Keranjang, kosong"
-              }
-            >
-              <CartIcon className="size-6" />
-              <span className="sr-only sm:not-sr-only sm:text-base">
-                Keranjang
-              </span>
-              {cartCount > 0 && (
-                <span className="bg-gold-400 text-ink-900 tabular absolute top-0.5 right-0.5 min-w-5 rounded-full px-1.5 text-xs leading-5 font-bold">
-                  {cartCount}
-                </span>
-              )}
-            </button>
+            <nav aria-label="Navigasi utama">
+              {/* Area sentuh 44px penuh. */}
+              <Link
+                href="/produk"
+                className="text-on-dark-soft hover:bg-on-dark/10 hover:text-on-dark active:bg-on-dark/20 inline-flex min-h-11 items-center rounded-md px-3 font-medium transition-colors"
+              >
+                Produk
+              </Link>
+            </nav>
+
+            {/* TODO: tombol keranjang kembali ke sini begitu keranjang
+                benar-benar bisa dipakai. Tombol yang terlihat bisa ditekan
+                tapi tidak melakukan apa-apa lebih buruk daripada tidak ada. */}
           </div>
         </div>
       </Container>
