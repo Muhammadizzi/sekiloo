@@ -404,7 +404,7 @@ Pembeli (HP, dari link WhatsApp)
         |
         v
 Web pembeli: Next.js 16 di Netlify
-  - baca katalog, kloter, wilayah   -> Supabase (anon key, dibatasi RLS)
+  - baca katalog, kloter, wilayah   -> Supabase (publishable key, dibatasi RLS)
   - checkout                        -> fungsi database create_order -> Midtrans Snap
   - halaman status bertoken         -> dibaca server (service role)
 
@@ -584,7 +584,7 @@ Fitur ini hanya dibangun kalau setelah MVP terbukti dibutuhkan pembeli. Batasan 
 ### 19.2 Tampilan dan gerak
 - Mobile-first, karena sebagian besar pembeli membuka link dari WhatsApp di HP.
 - Warna Dapur Asap dari `src/app/globals.css`. Hijau dipakai khusus untuk penanda halal.
-- Framer Motion dipakai untuk kartu produk yang muncul saat digulir (sudah ada) dan bar kapasitas kloter.
+- Framer Motion dipakai untuk kartu produk yang muncul saat digulir. Bar kapasitas kloter cukup memakai transisi CSS, karena bar itu hanya bergerak saat angkanya berubah setelah disegarkan.
 - Efek kecil yang sering muncul dibuat dengan CSS supaya tidak menambah JavaScript (komponen di `src/components/ui/`, contohnya di `/styleguide`):
   - tombol mengecil 3% saat ditekan, sebagai umpan balik sentuh di HP;
   - kartu yang bisa ditekan naik 2 px dengan bayangan saat disorot kursor (hanya di perangkat yang punya hover), dan latarnya menggelap saat ditekan di HP;
@@ -618,7 +618,7 @@ Kontras teks memenuhi WCAG AA, target sentuh minimal 44 px, zoom tidak dikunci, 
 
 **Bisa dipakai lagi:** design system (`globals.css`, warna Dapur Asap), komponen UI (Button, Badge, Card, Section, Header, Footer), kartu produk dan animasinya (`KartuProduk`, `KartuMuncul`, `PenyediaGerak`) dengan penyesuaian data, setup framer-motion dan pnpm, serta `CatatanPlaceholder`.
 
-**Tidak dipakai lagi:** dua zona harga (`ZonaId`, `product.zona`), tiga titik ambil (`LOKASI`, `PemilihLokasi`, pilihan lokasi di `PembelianContext`), kode ambil, dan `caraJual`, yang diganti `unit_type`.
+**Sudah dihapus di Fase 1 langkah 2:** dua zona harga (`ZonaId`, `product.zona`), tiga titik ambil (`LOKASI`, `PemilihLokasi`, `PembelianContext`), galeri multi-foto, dan data produk karangan di `src/data/products.ts`. Katalog sekarang dibaca dari Supabase.
 
 **Tetap dipakai:** kategori produk, sekarang kolom `products.category`, karena daftar produk asli memuat kepala, jeroan, dan telur ikan asap.
 
@@ -653,6 +653,9 @@ Kontras teks memenuhi WCAG AA, target sentuh minimal 44 px, zoom tidak dikunci, 
 | 17 Nov 2026 | Satuan tetap tiga: `ekor`, `pack_irisan`, `bungkus`. Satuan lama dipetakan: per ekor jadi `ekor`, per potong jadi `pack_irisan`, per 250 gr dan per buah jadi `bungkus` |
 | 17 Nov 2026 | Kategori produk dipertahankan (`ikan`, `kepala`, `jeroan`, `telur`, `pendamping`) |
 | 17 Nov 2026 | Notifikasi lunas yang terlambat masuk masih diterima selama 10 menit setelah batas bayar. Transaksi yang dibuat setelah batas bayar, atau dibayar setelah pesanan batal, otomatis masuk daftar refund |
+| 17 Nov 2026 | Katalog dibaca lewat REST Supabase dengan publishable key dan cache Next.js: produk dan wilayah 5 menit, kloter 1 menit. Kartu kloter juga menyegarkan sisa kapasitas langsung dari browser saat halaman dibuka dan saat pembeli kembali ke tab, dan berganti ke "Pemesanan ditutup" tepat di jam tutupnya |
+| 17 Nov 2026 | Klaim "Bersertifikat Halal" di header dan footer disembunyikan sampai nomor sertifikat asli diisi di `src/data/halal.ts` |
+| 17 Nov 2026 | Hero beranda sementara memakai foto ilustrasi berketerangan "Foto ilustrasi", sampai foto proses pengasapan asli tersedia |
 
 ---
 
@@ -703,7 +706,7 @@ Kontras teks memenuhi WCAG AA, target sentuh minimal 44 px, zoom tidak dikunci, 
 
 **Fase 1: MVP**
 1. Skema database, RLS, fungsi `create_order`, aturan status, `pg_cron`, sebagai file migrasi di repo. Selesai 17 Nov 2026, 59 cek di `supabase/tests/uji_skema.sql` lolos.
-2. Katalog dan kartu kloter aktif di web.
+2. Katalog dan kartu kloter aktif di web. Selesai 17 Nov 2026: beranda, `/produk`, `/produk/[slug]`, dan semua keadaan kartu kloter (contohnya di `/styleguide#kloter`). Bagian halal ringkas dan FAQ di beranda menyusul bersama halamannya di langkah 6.
 3. Keranjang dan checkout dengan peta.
 4. Midtrans Snap, webhook, halaman status, Cek Pesanan.
 5. APK admin untuk kedua role.

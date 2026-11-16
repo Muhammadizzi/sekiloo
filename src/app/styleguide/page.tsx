@@ -13,6 +13,10 @@ import { Badge, HalalBadge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { LabelTegak } from "@/components/ui/LabelTegak";
 import { FotoPlaceholder } from "@/components/produk/FotoPlaceholder";
+import { KartuProduk } from "@/components/produk/KartuProduk";
+import { KartuKloter } from "@/components/kloter/KartuKloter";
+import type { HasilKloter, Kloter } from "@/lib/kloter";
+import type { Produk } from "@/lib/produk";
 import {
   CheckIcon,
   LeafIcon,
@@ -24,6 +28,51 @@ import {
 export const metadata: Metadata = {
   title: "Panduan Gaya",
   description: "Halaman sementara untuk meninjau design system sekiloo.",
+};
+
+/* Data contoh. Waktu dibuat tetap supaya keadaan "buka" dan "ditutup" tidak berubah sendiri setelah build. */
+const WAKTU_CONTOH = Date.parse("2026-11-17T03:00:00Z");
+
+function kloterContoh(ubah: Partial<Kloter>): HasilKloter {
+  return {
+    ok: true,
+    data: {
+      id: "contoh",
+      name: "Kloter contoh",
+      close_order_at: "2099-11-19T11:00:00Z",
+      checkout_closes_at: "2099-11-19T10:45:00Z",
+      delivery_date: "2099-11-21",
+      capacity_gram: 20000,
+      max_order_weight_gram: 3000,
+      used_gram: 12800,
+      remaining_gram: 7200,
+      ...ubah,
+    },
+  };
+}
+
+const CONTOH_KLOTER: { label: string; hasil: HasilKloter }[] = [
+  { label: "Buka", hasil: kloterContoh({}) },
+  { label: "Hampir penuh", hasil: kloterContoh({ used_gram: 19400, remaining_gram: 600 }) },
+  { label: "Penuh", hasil: kloterContoh({ used_gram: 20000, remaining_gram: 0 }) },
+  {
+    label: "Pemesanan sudah ditutup",
+    hasil: kloterContoh({ checkout_closes_at: "2026-11-16T10:45:00Z", close_order_at: "2026-11-16T11:00:00Z" }),
+  },
+  { label: "Belum ada kloter", hasil: { ok: true, data: null } },
+  { label: "Gagal dimuat", hasil: { ok: false } },
+];
+
+const PRODUK_CONTOH: Produk = {
+  id: "contoh",
+  slug: "contoh",
+  nama: "Produk contoh",
+  kategori: "ikan",
+  satuan: "ekor",
+  deskripsi: "",
+  beratIsiGram: 450,
+  harga: 40000,
+  fotoUrl: null,
 };
 
 /* ---------- pembantu tampilan, khusus halaman ini ---------- */
@@ -87,7 +136,7 @@ export default function StyleGuidePage() {
             <p className="text-on-dark-soft mt-stack text-lg md:text-xl">
               Gelap dan emas dipakai sebagai bingkai. Begitu masuk ke area
               produk dan informasi halal, tampilan berganti terang dan
-              berkontras tinggi — supaya yang paling penting justru yang paling
+              berkontras tinggi, supaya yang paling penting justru yang paling
               mudah dibaca.
             </p>
             <div className="mt-block flex flex-wrap gap-3">
@@ -110,7 +159,7 @@ export default function StyleGuidePage() {
         <div className="space-y-8">
           <div>
             <h3 className="text-content mb-3 text-lg font-semibold">
-              Zona bingkai — gelap
+              Zona bingkai: gelap
             </h3>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
               <Swatch name="Ink 950" token="--color-ink-950" className="bg-ink-950" />
@@ -123,7 +172,7 @@ export default function StyleGuidePage() {
 
           <div>
             <h3 className="text-content mb-3 text-lg font-semibold">
-              Emas — aksen merek
+              Emas: aksen merek
             </h3>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <Swatch
@@ -150,7 +199,7 @@ export default function StyleGuidePage() {
 
           <div>
             <h3 className="text-content mb-3 text-lg font-semibold">
-              Zona konten — terang
+              Zona konten: terang
             </h3>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
               <Swatch name="Surface" token="--color-surface" className="bg-surface" />
@@ -198,13 +247,13 @@ export default function StyleGuidePage() {
       <Section
         tone="sunken"
         title="Tipografi"
-        description="Seluruhnya font sistem — nol unduhan jaringan, nol kedipan teks, dan build tidak bisa gagal gara-gara CDN font."
+        description="Seluruhnya font sistem: nol unduhan jaringan, nol kedipan teks, dan build tidak bisa gagal gara-gara CDN font."
       >
         <Card>
           <CardBody className="space-y-6">
             <div>
               <p className="text-content-muted text-sm">
-                Display / serif sistem — untuk judul
+                Display / serif sistem, untuk judul
               </p>
               <p className="font-display text-content mt-1 text-4xl font-semibold">
                 Ikan asap pilihan
@@ -216,7 +265,7 @@ export default function StyleGuidePage() {
 
             <div className="border-line border-t pt-6">
               <p className="text-content-muted text-sm">
-                Sans / sans-serif sistem — untuk isi teks
+                Sans / sans-serif sistem, untuk isi teks
               </p>
               <p className="text-content mt-1 max-w-prose text-base">
                 Diasap dengan kayu pilihan pada suhu terkendali, tanpa pengawet
@@ -231,17 +280,17 @@ export default function StyleGuidePage() {
             <div className="border-line border-t pt-6">
               <p className="text-content-muted text-sm">Skala ukuran</p>
               <div className="mt-2 space-y-1">
-                <p className="text-content text-4xl font-semibold">36px — judul halaman</p>
-                <p className="text-content text-2xl font-semibold">24px — judul seksi</p>
-                <p className="text-content text-xl font-semibold">20px — judul kartu</p>
-                <p className="text-content text-base">16px — teks isi (minimum di HP)</p>
-                <p className="text-content-muted text-sm">14px — keterangan</p>
+                <p className="text-content text-4xl font-semibold">36px: judul halaman</p>
+                <p className="text-content text-2xl font-semibold">24px: judul seksi</p>
+                <p className="text-content text-xl font-semibold">20px: judul kartu</p>
+                <p className="text-content text-base">16px: teks isi (minimum di HP)</p>
+                <p className="text-content-muted text-sm">14px: keterangan</p>
               </div>
             </div>
 
             <div className="border-line border-t pt-6">
               <p className="text-content-muted text-sm">
-                Angka tabular — dipakai untuk harga agar kolom tidak bergeser
+                Angka tabular, dipakai untuk harga agar kolom tidak bergeser
               </p>
               <p className="tabular text-content mt-1 text-2xl font-semibold">
                 Rp 45.000 · Rp 118.000 · Rp 9.000
@@ -322,7 +371,7 @@ export default function StyleGuidePage() {
               <Button variant="ghost">Ghost</Button>
               <Button variant="danger">Danger</Button>
             </Row>
-            <Row label="Ukuran — semua memenuhi ambang area sentuh">
+            <Row label="Ukuran: semua memenuhi ambang area sentuh">
               <Button size="sm">Kecil 40px</Button>
               <Button size="md">Sedang 44px</Button>
               <Button size="lg">Besar 52px</Button>
@@ -360,7 +409,7 @@ export default function StyleGuidePage() {
               </CardTitle>
               <CardText className="text-halal-800/80">
                 Komponen tersendiri, bukan sekadar badge hijau. Nomor sertifikat
-                bisa tampil langsung — klaim halal tanpa nomor yang bisa dicek
+                bisa tampil langsung. Klaim halal tanpa nomor yang bisa dicek
                 adalah klaim kosong, dan pembeli yang ragu justru yang paling
                 teliti membacanya.
               </CardText>
@@ -398,7 +447,7 @@ export default function StyleGuidePage() {
       <Section
         tone="sunken"
         title="Kartu"
-        description="Varian trust dipakai khusus untuk info keamanan pangan dan halal, supaya terbaca seperti keterangan resmi — bukan seperti iklan."
+        description="Varian trust dipakai khusus untuk info keamanan pangan dan halal, supaya terbaca seperti keterangan resmi, bukan seperti iklan."
       >
         <div className="grid gap-6 md:grid-cols-3">
           <Card>
@@ -459,7 +508,7 @@ export default function StyleGuidePage() {
               </p>
               <p className="text-on-dark-soft mt-block flex items-center gap-2">
                 <MapPinIcon className="text-gold-400 size-5" />
-                3 titik pengambilan
+                Diantar ke rumah di Cikarang
               </p>
             </CardBody>
           </Card>
@@ -478,14 +527,14 @@ export default function StyleGuidePage() {
             </div>
             <CardBody>
               <CardTitle as="h3">
-                <Link href="/produk/ikan-patin-asap" className={tautanMeregang}>
+                <Link href="/produk" className={tautanMeregang}>
                   Kartu yang bisa ditekan
                 </Link>
               </CardTitle>
               <CardText>
                 Saat disorot kursor, kartu naik sedikit dan bayangannya menebal.
                 Di HP, latarnya menggelap saat ditekan. Tautan ini membuka
-                halaman detail Ikan Patin Asap.
+                daftar produk.
               </CardText>
             </CardBody>
           </Card>
@@ -532,15 +581,39 @@ export default function StyleGuidePage() {
         </p>
       </Section>
 
+      <Section
+        id="kloter"
+        tone="light"
+        title="Kartu Kloter & Produk"
+        description="Semua keadaan kartu kloter, dengan data contoh. Di beranda, kartu yang sama memakai data asli dari database dan menyegarkan diri saat halaman dibuka."
+      >
+        <div className="grid gap-6 lg:grid-cols-2">
+          {CONTOH_KLOTER.map((contoh) => (
+            <div key={contoh.label}>
+              <p className="text-content-muted mb-2 text-sm font-medium">{contoh.label}</p>
+              <KartuKloter awal={contoh.hasil} waktuRender={WAKTU_CONTOH} segarkan={false} />
+            </div>
+          ))}
+        </div>
+
+        <h3 className="text-content mt-section mb-3 text-lg font-semibold">Kartu produk</h3>
+        <div className="grid max-w-md grid-cols-2 gap-3">
+          <KartuProduk produk={PRODUK_CONTOH} />
+        </div>
+        <p className="text-content-muted mt-3 text-sm">
+          Produk contoh, jadi tautannya membuka halaman tidak ditemukan.
+        </p>
+      </Section>
+
       {/* ============ CATATAN ============ */}
-      <Section tone="light" title="Yang belum dikerjakan">
+      <Section tone="sunken" title="Yang belum dikerjakan">
         <Card variant="raised">
           <CardBody>
             <ul className="text-content-soft space-y-2.5">
               {[
-                "Halaman katalog & detail produk — sengaja belum, sesuai permintaan.",
-                "Keranjang masih tombol kosong, belum terhubung ke state apa pun.",
-                "Alamat, jam buka, nomor WhatsApp, dan nomor sertifikat halal di footer masih placeholder.",
+                "Keranjang dan checkout: langkah berikutnya (PRD Bagian 24, Fase 1 langkah 3).",
+                "Nomor WhatsApp dan data sertifikat halal masih menunggu data asli.",
+                "Foto produk dan foto proses pengasapan asli belum ada.",
                 "Logo gambar belum ada; identitas sementara bertumpu pada wordmark serif.",
               ].map((teks) => (
                 <li key={teks} className="flex gap-2.5">

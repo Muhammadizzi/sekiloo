@@ -15,11 +15,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "sekiloo — Ikan Asap Halal & Higienis",
+    default: "sekiloo · Ikan asap PO, diantar di Cikarang",
     template: "%s · sekiloo",
   },
   description:
-    "Ikan asap yang diproses higienis, bersertifikat halal, dan bisa diambil di tiga lokasi. Pesan online, bayar aman.",
+    "Pesan ikan asap per kloter, diasap sesuai pesanan, lalu diantar ke rumahmu di Cikarang.",
 };
 
 /* Perhatikan yang TIDAK ada di sini: maximumScale dan userScalable.

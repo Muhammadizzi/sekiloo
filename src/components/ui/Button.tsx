@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, AnchorHTMLAttributes, ReactNode } from "react";
+import Link from "next/link";
 import { cn } from "@/lib/cn";
 
 /**
@@ -129,6 +130,14 @@ export function Button(props: ButtonProps) {
 
   if (rest.href !== undefined) {
     const anchorProps = rest as AnchorHTMLAttributes<HTMLAnchorElement>;
+    // Tautan internal lewat next/link supaya pindah halaman tanpa memuat ulang.
+    if (rest.href.startsWith("/")) {
+      return (
+        <Link {...anchorProps} href={rest.href} className={classes}>
+          {children}
+        </Link>
+      );
+    }
     return (
       <a {...anchorProps} className={classes}>
         {children}
