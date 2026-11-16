@@ -359,18 +359,32 @@ Angka suhu dan masa simpan hanya boleh diambil dari uji ketahanan produk, bukan 
 | Tabel | Kolom penting | Catatan |
 |---|---|---|
 | `admin_roles` | `user_id` (ref `auth.users`), `role` (`admin_produksi` / `admin_cikarang`), `name`, `created_at` | Diisi manual lewat dashboard Supabase. Tidak ada aplikasi yang boleh menulis ke tabel ini |
-| `products` | `id`, `slug`, `name`, `description`, `unit_type` (`ekor` / `pack_irisan` / `bungkus`), `net_weight_gram`, `ship_weight_gram`, `price`, `image_path`, `is_active`, `sort_order` | `price` dalam rupiah bulat, sudah termasuk kemasan vakum |
-| `service_areas` | `id`, `name`, `delivery_fee`, `center_lat`, `center_lng`, `is_active`, `sort_order` | Isi awal: Cikarang Utara, Barat, Selatan, Timur, Pusat |
-| `po_batches` | `id`, `name`, `close_order_at`, `delivery_date`, `capacity_gram`, `max_order_weight_gram`, `min_weight_gram` (default 3000), `min_orders` (default 5), `status`, `cancel_reason`, `created_by`, `created_at` | Maksimal satu kloter `open` |
-| `orders` | `id`, `invoice_number`, `status_token`, `batch_id`, `buyer_name`, `buyer_phone`, `recipient_name`, `recipient_phone`, `area_id`, `address_text`, `address_note`, `lat`, `lng`, `subtotal`, `delivery_fee`, `total_amount`, `total_weight_gram`, `payment_status`, `order_status`, `cancel_reason`, `expires_at`, `paid_at`, `shipped_at`, `arrived_at`, `delivered_at`, `delivery_attempts`, `proof_photo_path`, `consent_at`, `created_at` | `status_token` acak minimal 128 bit dan unik |
+| `products` | `id`, `slug`, `name`, `category` (`ikan` / `kepala` / `jeroan` / `telur` / `pendamping`), `description`, `unit_type` (`ekor` / `pack_irisan` / `bungkus`), `net_weight_gram`, `ship_weight_gram`, `price`, `image_path`, `is_active`, `sort_order` | `price` dalam rupiah bulat, sudah termasuk kemasan vakum. Harga dan berat boleh kosong selama produk nonaktif. Produk baru bisa diaktifkan setelah `price`, `net_weight_gram`, dan `ship_weight_gram` terisi |
+| `service_areas` | `id`, `name`, `delivery_fee`, `center_lat`, `center_lng`, `is_active`, `sort_order` | Isi awal: Cikarang Utara, Barat, Selatan, Timur, Pusat. `delivery_fee` boleh kosong selama nonaktif. Wilayah baru bisa diaktifkan setelah ongkir terisi |
+| `po_batches` | `id`, `name`, `close_order_at`, `delivery_date`, `capacity_gram`, `max_order_weight_gram`, `min_weight_gram` (default 3000), `min_orders` (default 5), `status`, `cancel_reason`, `change_reason`, `created_by`, `created_at` | Maksimal satu kloter `open`. Kolom `status` tidak bisa diubah langsung, hanya lewat fungsi |
+| `orders` | `id`, `invoice_number`, `status_token`, `batch_id`, `buyer_name`, `buyer_phone`, `recipient_name`, `recipient_phone`, `area_id`, `address_text`, `address_note`, `lat`, `lng`, `subtotal`, `delivery_fee`, `total_amount`, `total_weight_gram`, `payment_status`, `order_status`, `cancel_reason`, `cancel_note`, `expires_at`, `paid_at`, `shipped_at`, `arrived_at`, `delivered_at`, `delivery_attempts`, `proof_photo_path`, `consent_at`, `created_at` | `status_token` acak 128 bit dan unik. Format invoice `SKL-YYMMDD-NNNN` |
 | `order_items` | `id`, `order_id`, `product_id`, `quantity`, `price_at_purchase`, `ship_weight_at_purchase_gram` | Harga dan berat dicatat saat pesan |
-| `payments` | `id`, `order_id`, `transaction_id`, `transaction_status`, `payment_type`, `gross_amount`, `transaction_time`, `raw_payload`, `received_at` | Unik pada (`transaction_id`, `transaction_status`) untuk idempotensi |
+| `payments` | `id`, `order_id`, `invoice_number`, `transaction_id`, `transaction_status`, `fraud_status`, `payment_type`, `gross_amount`, `transaction_time`, `outcome`, `raw_payload`, `received_at` | Unik pada (`transaction_id`, `transaction_status`) untuk idempotensi. `outcome` mencatat hasil pemrosesan, termasuk notifikasi yang ditolak |
 | `refunds` | `id`, `order_id`, `amount`, `reason`, `status` (`pending` / `done`), `proof_path`, `processed_by`, `processed_at` | Tanpa nomor rekening pembeli |
-| `status_log` | `id`, `order_id` atau `batch_id`, `actor` (id admin, `system`, atau `midtrans`), `from_status`, `to_status`, `note`, `created_at` | Diisi otomatis dan tidak bisa dihapus |
+| `status_log` | `id`, `order_id` atau `batch_id`, `actor_type` (`system` / `midtrans` / `admin`), `actor_id`, `from_status`, `to_status`, `note`, `created_at` | Diisi otomatis. Trigger menolak semua ubah dan hapus |
+| `checkout_attempts` | `id`, `ip_hash`, `created_at` | Untuk batas 5 checkout per IP per jam. Berisi hash, bukan IP asli. Dibersihkan setelah 1 hari |
 | `testimonials` (Fase 2) | `id`, `order_id` (unik), `rating` (1-5), `comment`, `photo_path`, `is_published`, `created_at` | Ditambah kolom `orders.review_token` |
 | Artikel (Fase 2) | File MDX di repo | Tidak perlu tabel dan menu admin |
 
-Tipe TypeScript untuk tabel di atas dibuat otomatis dengan `supabase gen types` ke `types/database.ts`.
+**Fungsi database.** Semua perubahan status lewat fungsi ini, tidak ada aplikasi yang mengubah kolom status secara langsung.
+
+| Fungsi | Dipanggil oleh | Tugas |
+|---|---|---|
+| `get_open_batch()` | Publik | Kloter yang sedang buka, jam tutup checkout, dan sisa kapasitas. Tanpa data pesanan |
+| `create_order(...)` | Server web (service role) | Validasi keranjang, wilayah, titik peta, batas anti-spam, dan kapasitas, lalu membuat pesanan. Harga dan ongkir diambil dari database |
+| `apply_payment_notification(...)` | Route webhook, setelah signature diverifikasi | Mencatat notifikasi Midtrans dan menentukan hasilnya: `lunas`, `duplikat`, `nominal_tidak_cocok`, `perlu_refund`, `dibatalkan`, dan lainnya |
+| `batch_depart`, `batch_cancel`, `order_cancel`, `refund_complete` | `admin_produksi` | Memberangkatkan kloter, membatalkan kloter atau pesanan, menyelesaikan refund dengan bukti transfer |
+| `batch_arrive`, `order_start_delivery`, `order_complete`, `order_delivery_failed` | `admin_cikarang` | Menandai kloter tiba dan mencatat pengantaran. `order_cancel` juga bisa dipakai, khusus setelah gagal antar |
+| `run_scheduled_jobs()` | `pg_cron`, tiap 5 menit | Membatalkan pesanan yang tidak dibayar, menutup atau membatalkan kloter yang lewat jam tutup, menandai kloter selesai |
+
+Fungsi baca untuk APK (rekap produksi tanpa alamat, daftar antar untuk `admin_cikarang`) dibuat di langkah APK.
+
+**File di repo.** Migrasi di `supabase/migrations/`, data awal di `supabase/seed.sql`, uji fungsional di `supabase/tests/uji_skema.sql`. Tipe TypeScript dibuat otomatis dari skema ke `src/types/database.ts`.
 
 **Penyimpanan file (Supabase Storage):**
 
@@ -604,9 +618,11 @@ Kontras teks memenuhi WCAG AA, target sentuh minimal 44 px, zoom tidak dikunci, 
 
 **Bisa dipakai lagi:** design system (`globals.css`, warna Dapur Asap), komponen UI (Button, Badge, Card, Section, Header, Footer), kartu produk dan animasinya (`KartuProduk`, `KartuMuncul`, `PenyediaGerak`) dengan penyesuaian data, setup framer-motion dan pnpm, serta `CatatanPlaceholder`.
 
-**Tidak dipakai lagi:** dua zona harga (`ZonaId`, `product.zona`), tiga titik ambil (`LOKASI`, `PemilihLokasi`, pilihan lokasi di `PembelianContext`), kode ambil, serta kategori kepala/jeroan/telur dan `caraJual`, yang diganti `unit_type`. Kategori lama hanya dipertahankan kalau pemilik masih mau menjual produk itu (Bagian 23).
+**Tidak dipakai lagi:** dua zona harga (`ZonaId`, `product.zona`), tiga titik ambil (`LOKASI`, `PemilihLokasi`, pilihan lokasi di `PembelianContext`), kode ambil, dan `caraJual`, yang diganti `unit_type`.
 
-**Sebelum Fase 1:** kumpulkan dulu pekerjaan yang tercecer (perubahan yang belum di-commit, branch `arena/01a0e352-sekiloo`, dan stash) ke `main`.
+**Tetap dipakai:** kategori produk, sekarang kolom `products.category`, karena daftar produk asli memuat kepala, jeroan, dan telur ikan asap.
+
+**Sebelum Fase 1:** pekerjaan yang tercecer sudah dikumpulkan ke `main` di Fase 0.
 
 ---
 
@@ -632,6 +648,11 @@ Kontras teks memenuhi WCAG AA, target sentuh minimal 44 px, zoom tidak dikunci, 
 | 17 Nov 2026 | Animasi tombol, hover kartu, dan skeleton shimmer dibuat dengan CSS. Framer Motion hanya untuk animasi masuk dan bar kapasitas |
 | 17 Nov 2026 | Teks tegak dipakai sebagai ciri khas di tepi hero, huruf serif biasa (pilihan A). Pilihan kapital renggang ditolak karena terlalu umum |
 | 17 Nov 2026 | Keamanan operasional dan daftar cek sebelum rilis ditambahkan (Bagian 14.3 dan 14.4): captcha sejak MVP, batas bayar 15 menit, berat maksimal per pesanan, foto bukti di bucket privat, 2FA di semua akun layanan |
+| 17 Nov 2026 | Skema lama di project Supabase `ikan-asap` (model pickup, Agustus 2026) dihapus total dan diganti skema v0.4. Tidak ada aplikasi lain yang memakai database itu |
+| 17 Nov 2026 | 10 produk dari katalog lama jadi data awal, semuanya nonaktif sampai berat, harga Cikarang, dan foto lengkap. Klaim manfaat kesehatan dari data lama tidak dibawa |
+| 17 Nov 2026 | Satuan tetap tiga: `ekor`, `pack_irisan`, `bungkus`. Satuan lama dipetakan: per ekor jadi `ekor`, per potong jadi `pack_irisan`, per 250 gr dan per buah jadi `bungkus` |
+| 17 Nov 2026 | Kategori produk dipertahankan (`ikan`, `kepala`, `jeroan`, `telur`, `pendamping`) |
+| 17 Nov 2026 | Notifikasi lunas yang terlambat masuk masih diterima selama 10 menit setelah batas bayar. Transaksi yang dibuat setelah batas bayar, atau dibayar setelah pesanan batal, otomatis masuk daftar refund |
 
 ---
 
@@ -645,9 +666,9 @@ Kontras teks memenuhi WCAG AA, target sentuh minimal 44 px, zoom tidak dikunci, 
 **Data operasional:**
 4. Ongkir tiap kecamatan (Rp).
 5. Kapasitas cool box perjalanan dan freezer di Cikarang (gram), sebagai nilai awal `capacity_gram`.
-6. Daftar produk awal: nama, satuan, berat isi, berat setelah dikemas, harga, foto. Apakah kepala, jeroan, dan telur ikan asap masih dijual?
-7. Lama perjalanan dari desa ke Cikarang, dan jarak minimum antara jam tutup PO dan tanggal antar.
-8. Wilayah layanan: seluruh kecamatan, atau hanya area tertentu?
+6. Daftar produk awal. Sudah ada: 10 nama produk dan satuannya (Bagian 22). Masih perlu: berat isi, berat setelah dikemas, harga Cikarang, dan foto tiap produk. Harga Bandeng Rp40.000 dan Tongkol Rp30.000 berasal dari model lama, apakah masih berlaku? Pemetaan satuan lama juga perlu dicek, dan beri tahu kalau ada produk yang tidak dijual lagi.
+7. Lama perjalanan dari desa ke Cikarang, dan jarak minimum antara jam tutup PO dan tanggal antar. Sementara database mewajibkan tanggal antar paling cepat sehari setelah tutup PO.
+8. Wilayah layanan: seluruh kecamatan, atau hanya area tertentu? Batas peta di database sementara berupa kotak perkiraan (lintang -6,43 sampai -6,20, bujur 107,03 sampai 107,28), dan titik tengah tiap kecamatan juga perkiraan. Keduanya wajib dicek di peta sebelum rilis.
 
 **Kebijakan:**
 9. Gagal antar karena pembeli: di-refund atau tidak?
@@ -681,7 +702,7 @@ Kontras teks memenuhi WCAG AA, target sentuh minimal 44 px, zoom tidak dikunci, 
 - Aktifkan 2FA di semua akun layanan dan isi tabel pemegang akun (Bagian 14.3).
 
 **Fase 1: MVP**
-1. Skema database, RLS, fungsi `create_order`, aturan status, `pg_cron`, sebagai file migrasi di repo.
+1. Skema database, RLS, fungsi `create_order`, aturan status, `pg_cron`, sebagai file migrasi di repo. Selesai 17 Nov 2026, 59 cek di `supabase/tests/uji_skema.sql` lolos.
 2. Katalog dan kartu kloter aktif di web.
 3. Keranjang dan checkout dengan peta.
 4. Midtrans Snap, webhook, halaman status, Cek Pesanan.
@@ -698,7 +719,7 @@ Kontras teks memenuhi WCAG AA, target sentuh minimal 44 px, zoom tidak dikunci, 
 ## 25. Konvensi Pengembangan
 
 - TypeScript strict (`strict: true`) di web dan APK.
-- Tipe database dibuat dengan `supabase gen types` ke `types/database.ts`, tidak ditulis tangan.
+- Tipe database dibuat otomatis dari skema ke `src/types/database.ts`, tidak ditulis tangan.
 - Perubahan skema database selalu lewat file migrasi di repo.
 - Mobile-first untuk semua halaman web.
 - Sebelum menulis kode Next.js, baca dokumentasi di `node_modules/next/dist/docs/` (lihat `AGENTS.md`), karena Next.js 16 punya banyak perubahan.
