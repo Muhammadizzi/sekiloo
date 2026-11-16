@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/Badge";
 import { MapPinIcon } from "@/components/icons";
 import { cn } from "@/lib/cn";
 import { formatRupiah } from "@/lib/format";
-import { statusStok, usePembelian } from "./PembelianContext";
+import { statusStok } from "@/lib/stok";
+import { usePembelian } from "./PembelianContext";
 
 /**
  * Pemilih lokasi pengambilan — bagian pembeda halaman ini.
@@ -34,13 +35,20 @@ import { statusStok, usePembelian } from "./PembelianContext";
  *    Seluruh kartu adalah <label>, jadi area sentuhnya tetap selebar kartu.
  */
 export function PemilihLokasi() {
-  const { product, pilihan, lokasi, rincian, kalimatHarga, kalimatStok, pilihLokasi } =
-    usePembelian();
+  const {
+    product,
+    pilihan,
+    lokasi,
+    rincian,
+    kalimatHarga,
+    kalimatStok,
+    pilihLokasi,
+  } = usePembelian();
 
   const stok = statusStok(
     rincian.stok,
     product.ambangStokMenipis,
-    product.satuanStok,
+    product.satuan,
   );
 
   return (
@@ -123,8 +131,14 @@ export function PemilihLokasi() {
           */}
           <div aria-live="polite">
             <p className="text-content-muted text-sm">Harga di {lokasi.nama}</p>
+            {/* Satuannya ikut ditulis di sini, bukan cuma angkanya. Harga
+                per ekor dan harga per pack terbaca sama persis kalau
+                satuannya dilepas — dan bedanya besar bagi pembeli. */}
             <p className="tabular text-content mt-1 text-3xl font-semibold">
               {formatRupiah(rincian.harga)}
+              <span className="text-content-muted ml-1.5 text-base font-normal">
+                / {product.satuan}
+              </span>
             </p>
             <p className="mt-2.5">
               <Badge tone={stok.tone}>{stok.teks}</Badge>

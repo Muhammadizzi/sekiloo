@@ -23,12 +23,14 @@
      Heading pakai serif untuk kesan premium; body pakai sans-serif
      sistem karena paling terbaca di layar HP kecil.
      --------------------------------------------------------------- */
-  --font-display: ui-serif, Georgia, "Iowan Old Style", "Palatino Linotype",
+  --font-display:
+    ui-serif, Georgia, "Iowan Old Style", "Palatino Linotype",
     "Times New Roman", serif;
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, "Noto Sans", sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
-    monospace;
+  --font-sans:
+    system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    "Noto Sans", sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
   /* ---------------------------------------------------------------
      INK — keluarga gelap hangat (dasar zona bingkai).
@@ -115,8 +117,14 @@
      BAYANGAN — skala tunggal, hangat (bukan hitam murni).
      --------------------------------------------------------------- */
   --shadow-card: 0 1px 2px rgb(12 10 9 / 0.05), 0 1px 3px rgb(12 10 9 / 0.06);
-  --shadow-raised: 0 4px 12px rgb(12 10 9 / 0.08), 0 1px 3px rgb(12 10 9 / 0.06);
-  --shadow-gold: 0 0 0 1px rgb(201 162 39 / 0.25), 0 8px 24px rgb(201 162 39 / 0.12);
+  --shadow-raised:
+    0 4px 12px rgb(12 10 9 / 0.08), 0 1px 3px rgb(12 10 9 / 0.06);
+  --shadow-gold:
+    0 0 0 1px rgb(201 162 39 / 0.25), 0 8px 24px rgb(201 162 39 / 0.12);
+  /* Panel besar yang "mengambang" DI ATAS zona gelap (slot foto hero,
+     panel menu). Bayangan biasa tidak terlihat di atas latar gelap —
+     yang bekerja adalah bayangan yang lebih dalam dari latarnya. */
+  --shadow-panel: 0 24px 60px -24px rgb(12 10 9 / 0.9);
 }
 
 /* ==========================================================================
@@ -170,6 +178,127 @@ p {
   border-radius: var(--radius-xs);
 }
 
+/* ==========================================================================
+   KEDALAMAN ZONA GELAP
+   ==========================================================================
+   Zona gelap yang rata betul terbaca "mati": satu bidang hitam tanpa arah
+   cahaya tidak menuntun mata ke mana pun, jadi judul sebesar apa pun
+   terasa datar.
+
+   Dua kelas di bawah menambal itu TANPA mengorbankan kontras. Batas yang
+   dipegang: lapisan emas paling terang hanya 10% di atas ink-900. Pada
+   campuran itu, pasangan teks zona gelap yang paling tipis
+   (--color-on-dark-muted) masih di ~5,8:1 — tetap lolos AA. Menaikkannya
+   ke 20% akan menjatuhkannya ke ~4,4:1, jadi angka ini jangan dinaikkan
+   tanpa menghitung ulang.
+
+   Ditulis sebagai kelas CSS, bukan nilai arbitrer di JSX, supaya
+   gradiennya tetap satu sumber dan tetap memakai token warna.
+   ========================================================================== */
+
+/* Cahaya hangat yang jatuh dari kiri-atas, plus pendalaman ke bawah.
+   Dipakai pada lapisan dekoratif terpisah (absolute inset-0), bukan pada
+   elemen yang sudah punya bg-*, supaya tidak saling menimpa. */
+.lapis-cahaya {
+  background:
+    radial-gradient(
+      68% 60% at 12% -12%,
+      color-mix(in srgb, var(--color-gold-400) 10%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      52% 55% at 90% 4%,
+      color-mix(in srgb, var(--color-gold-200) 6%, transparent),
+      transparent 70%
+    ),
+    linear-gradient(180deg, var(--color-ink-900) 0%, var(--color-ink-950) 100%);
+}
+
+/* Garis emas setipis rambut yang memudar di kedua ujungnya. Satu-satunya
+   ornamen di zona gelap — penutup seksi dan pemisah header. */
+.garis-emas {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--color-gold-500) 50%, transparent) 18%,
+    var(--color-gold-500) 50%,
+    color-mix(in srgb, var(--color-gold-500) 50%, transparent) 82%,
+    transparent
+  );
+}
+
+/* ==========================================================================
+   GERAK — dipakai panel menu HP.
+   Durasi pendek & sekali jalan; blok prefers-reduced-motion di bawah
+   sudah otomatis memangkasnya jadi nyaris nol.
+   ========================================================================== */
+@keyframes sekiloo-muncul {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes sekiloo-turun {
+  from {
+    opacity: 0;
+    transform: translateY(-0.75rem);
+  }
+}
+
+.animasi-scrim {
+  animation: sekiloo-muncul 160ms ease-out;
+}
+
+.animasi-panel {
+  animation: sekiloo-turun 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ==========================================================================
+   REVEAL SAAT MENGGULIR
+   ==========================================================================
+   Elemen bertanda `data-reveal` muncul dengan fade + naik lembut begitu
+   masuk layar. Yang dipasang di sini HANYA gayanya; pemicunya satu
+   IntersectionObserver di src/components/layout/PengamatReveal.tsx.
+
+   ⚠️ BACA INI SEBELUM MENGUBAH SELEKTORNYA.
+
+   Perhatikan bahwa keadaan awal (opacity 0) BERSARANG DI DALAM `.js-reveal`
+   — kelas yang hanya dipasang ke <html> oleh skrip kecil di root layout,
+   dan hanya kalau JavaScript benar-benar berjalan. Ini bukan gaya
+   penulisan, ini syaratnya:
+
+     JS mati / gagal muat  → kelas tidak pernah ada → tidak ada satu pun
+                             elemen yang tersembunyi. Halaman tampil utuh.
+     JS hidup              → kelas terpasang sebelum badan halaman
+                             dirender, jadi tidak ada kedipan
+                             "terlihat lalu hilang".
+
+   Menulis `[data-reveal] { opacity: 0 }` tanpa induk `.js-reveal` akan
+   menyembunyikan seluruh isi halaman dari pengunjung tanpa JS dan dari
+   perayap yang tidak menjalankan skrip. Jangan.
+
+   Yang dianimasikan hanya `opacity` dan `transform` — keduanya bisa
+   dikerjakan compositor tanpa menghitung ulang tata letak, jadi tetap
+   mulus di HP kelas menengah. Jangan tambahkan height, top, atau margin
+   ke daftar transisi ini.
+   ========================================================================== */
+.js-reveal [data-reveal] {
+  opacity: 0;
+  /* 20px — cukup terasa sebagai "naik", masih jauh dari terasa melompat. */
+  transform: translateY(1.25rem);
+  transition:
+    opacity 700ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  /* Jeda bertahap untuk anggota grup (kartu katalog, butir daftar).
+     Nilainya diisi per elemen lewat <Reveal jeda={…}>. */
+  transition-delay: var(--reveal-jeda, 0ms);
+}
+
+.js-reveal [data-reveal][data-tampil] {
+  opacity: 1;
+  transform: none;
+}
+
 /* Hormati preferensi pengguna yang sensitif terhadap gerak. */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -179,5 +308,20 @@ p {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  /* Pertahanan lapis kedua untuk reveal.
+     Lapis pertama ada di skrip root layout: kalau "kurangi gerak" sudah
+     aktif sejak awal, kelas `.js-reveal` memang tidak pernah dipasang,
+     jadi aturan di atas tidak pernah berlaku sama sekali.
+
+     Blok ini mengurus kasus yang tersisa: pengguna MENGUBAH setelan itu
+     saat halaman sudah terbuka. Tanpa ini, elemen yang belum sempat
+     terlihat akan menggantung di opacity 0. Bukan sekadar "gerak yang
+     dipercepat" — semuanya langsung tampil di tempatnya, tanpa geser. */
+  .js-reveal [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
   }
 }

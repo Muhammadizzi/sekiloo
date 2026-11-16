@@ -33,6 +33,11 @@ import {
  * jadi komponen klien: bagian manfaat & keamanan tetap dirender di server
  * dan masuk ke sini lewat `children`, jadi tidak menambah JavaScript yang
  * diunduh pengunjung.
+ *
+ * Catatan: `statusStok` dulu tinggal di file ini, sekarang pindah ke
+ * `src/lib/stok.ts`. Alasannya ada di komentar file itu — singkatnya,
+ * halaman katalog adalah komponen server dan tidak boleh mengimpor
+ * apa pun dari berkas ber-"use client".
  */
 
 type IsiKonteks = {
@@ -110,31 +115,4 @@ export function usePembelian(): IsiKonteks {
     throw new Error("usePembelian harus dipakai di dalam <PembelianProvider>.");
   }
   return isi;
-}
-
-/** Status stok yang bisa dibaca manusia, dihitung dari angka stok satu zona. */
-export function statusStok(
-  stok: number,
-  ambang: number,
-  satuan: string,
-): {
-  tone: "halal" | "warn" | "danger";
-  teks: string;
-  bisaBeli: boolean;
-} {
-  if (stok <= 0) {
-    return { tone: "danger", teks: "Stok habis", bisaBeli: false };
-  }
-  if (stok <= ambang) {
-    return {
-      tone: "warn",
-      teks: `Stok menipis — sisa ${stok} ${satuan}`,
-      bisaBeli: true,
-    };
-  }
-  return {
-    tone: "halal",
-    teks: `Tersedia — ${stok} ${satuan} siap ambil`,
-    bisaBeli: true,
-  };
 }

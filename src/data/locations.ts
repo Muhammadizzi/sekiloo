@@ -98,6 +98,19 @@ function gabungNama(nama: string[]): string {
   return `${nama.slice(0, -1).join(", ")} dan ${nama[nama.length - 1]}`;
 }
 
+/**
+ * Nama titik-titik ambil satu zona, dirangkai pendek: "Pasar & Rumah Produksi".
+ *
+ * Bedanya dengan `kalimatHargaZona` di bawah: ini POTONGAN LABEL, bukan
+ * kalimat. Dipakai di kartu katalog yang sempit, tempat kalimat penuh
+ * akan makan tiga baris di layar 375px.
+ */
+export function labelZona(zonaId: ZonaId): string {
+  return lokasiDalamZona(zonaId)
+    .map((lokasi) => lokasi.nama)
+    .join(" & ");
+}
+
 /** Penjelasan kenapa harga zona ini seperti itu. */
 export function kalimatHargaZona(zonaId: ZonaId): string {
   const nama = lokasiDalamZona(zonaId).map((lokasi) => lokasi.nama);

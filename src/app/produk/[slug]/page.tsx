@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Section, Container } from "@/components/ui/Section";
+import { Reveal, jedaBertahap } from "@/components/ui/Reveal";
 import { Card, CardBody, CardTitle } from "@/components/ui/Card";
 import { Badge, HalalBadge } from "@/components/ui/Badge";
 import {
@@ -13,7 +14,12 @@ import {
   ThermometerIcon,
 } from "@/components/icons";
 
-import { getAllProductSlugs, getProductBySlug } from "@/data/products";
+import {
+  getAllProductSlugs,
+  getProductBySlug,
+  kategoriProduk,
+} from "@/data/products";
+import { CARA_JUAL } from "@/data/kategori";
 import { PembelianProvider } from "@/components/produk/PembelianContext";
 import { PemilihLokasi } from "@/components/produk/PemilihLokasi";
 import { AksiPembelian } from "@/components/produk/AksiPembelian";
@@ -108,9 +114,14 @@ export default async function HalamanDetailProduk({
                 </Link>
               </li>
               <li aria-hidden>/</li>
-              {/* Halaman katalog belum ada, jadi ini sengaja BUKAN tautan.
-                  Tautan yang menuju 404 lebih merugikan daripada teks biasa. */}
-              <li>Produk</li>
+              <li>
+                <Link
+                  href="/produk"
+                  className="hover:text-on-dark transition-colors"
+                >
+                  Produk
+                </Link>
+              </li>
               <li aria-hidden>/</li>
               <li className="text-on-dark-soft" aria-current="page">
                 {produk.nama}
@@ -130,6 +141,20 @@ export default async function HalamanDetailProduk({
           </div>
 
           <div>
+            {/* --- Kategori & cara jual ---
+                Penanda yang sama persis dengan yang dipakai di kartu
+                katalog, supaya pembeli langsung mengenali bahwa ia
+                mendarat di produk yang tadi ditekannya. Kata-katanya
+                datang dari src/data/kategori.ts, bukan ditulis ulang. */}
+            <p className="mb-3 flex flex-wrap gap-2">
+              <Badge tone="neutral">{kategoriProduk(produk).nama}</Badge>
+              {produk.caraJual && (
+                <Badge tone="neutral">
+                  {CARA_JUAL[produk.caraJual].penanda}
+                </Badge>
+              )}
+            </p>
+
             {/* --- Nama & deskripsi --- */}
             <h1 className="text-content text-3xl font-semibold md:text-4xl">
               {produk.nama}
@@ -156,9 +181,7 @@ export default async function HalamanDetailProduk({
                 halaman ini justru paling tidak menonjol. */}
             <Card className="mt-block">
               <CardBody>
-                <HalalBadge
-                  certificateNumber={produk.halal.nomorSertifikat}
-                />
+                <HalalBadge certificateNumber={produk.halal.nomorSertifikat} />
                 <p className="text-content-soft mt-block">
                   Diterbitkan oleh{" "}
                   <span className="font-medium">
@@ -179,8 +202,8 @@ export default async function HalamanDetailProduk({
                   className="mt-block"
                 >
                   <p>
-                    Ganti dengan nomor pada sertifikat asli beserta nama
-                    lembaga penerbit dan masa berlakunya, lalu unggah scan
+                    Ganti dengan nomor pada sertifikat asli beserta nama lembaga
+                    penerbit dan masa berlakunya, lalu unggah scan
                     sertifikatnya.
                   </p>
                   <p>
@@ -202,12 +225,21 @@ export default async function HalamanDetailProduk({
         title="Manfaat Gizi"
         description="Ditulis apa adanya. Yang belum diuji disebut belum diuji — bukan dibulatkan jadi janji."
         id="manfaat"
+        reveal
       >
         <Card>
           <CardBody>
+            {/* Kartunya sendiri TIDAK dianimasikan, hanya isinya. Bingkai
+                yang sudah berdiri lalu diisi terasa lebih tenang daripada
+                kotak besar yang ikut melayang naik. */}
             <ul className="grid gap-block sm:grid-cols-2">
-              {produk.manfaat.map((manfaat) => (
-                <li key={manfaat.judul} className="flex gap-3">
+              {produk.manfaat.map((manfaat, urutan) => (
+                <Reveal
+                  as="li"
+                  key={manfaat.judul}
+                  jeda={jedaBertahap(urutan)}
+                  className="flex gap-3"
+                >
                   <LeafIcon className="text-halal-600 mt-0.5 size-6 shrink-0" />
                   <div>
                     <h3 className="text-content text-lg font-semibold">
@@ -222,7 +254,7 @@ export default async function HalamanDetailProduk({
                       </p>
                     )}
                   </div>
-                </li>
+                </Reveal>
               ))}
             </ul>
           </CardBody>
@@ -235,16 +267,17 @@ export default async function HalamanDetailProduk({
           <p>
             Teks di atas sengaja ditulis tanpa satu pun angka gizi dan tanpa
             klaim kesehatan. Tidak ada &ldquo;menyehatkan jantung&rdquo;,
-            &ldquo;mencerdaskan otak&rdquo;, atau sejenisnya — klaim seperti
-            itu bersifat medis, dan untuk produk pangan klaim tanpa dasar bisa
+            &ldquo;mencerdaskan otak&rdquo;, atau sejenisnya — klaim seperti itu
+            bersifat medis, dan untuk produk pangan klaim tanpa dasar bisa
             menyesatkan pembeli sekaligus berisiko melanggar aturan label
             pangan.
           </p>
           <p>
             Kalau nanti mau mencantumkan angka (protein sekian gram, omega-3
             sekian miligram), angka itu harus datang dari{" "}
-            <span className="font-medium">hasil uji laboratorium produk ini
-            sendiri</span>
+            <span className="font-medium">
+              hasil uji laboratorium produk ini sendiri
+            </span>
             , lalu diisikan ke field <code>sumber</code> pada tiap poin di{" "}
             <code>src/data/products.ts</code>. Jangan menyalin angka dari
             internet: komposisi ikan berbeda-beda menurut jenis, ukuran, dan
@@ -259,105 +292,120 @@ export default async function HalamanDetailProduk({
         title="Keamanan & Kualitas"
         description="Bagian ini menjawab pertanyaan yang paling sering membuat orang ragu membeli ikan asap: prosesnya bersih atau tidak, dan tahan berapa lama."
         id="keamanan"
+        reveal
       >
         {/* Varian `trust` dipakai di sini persis seperti tujuannya:
             supaya blok ini terbaca sebagai keterangan resmi, bukan iklan. */}
-        <Card variant="trust">
-          <CardBody>
-            <CardTitle as="h3" className="text-halal-800 flex items-center gap-2">
-              <ThermometerIcon className="text-halal-600 size-6 shrink-0" />
-              Proses pengasapan
-            </CardTitle>
+        <Reveal>
+          <Card variant="trust">
+            <CardBody>
+              <CardTitle
+                as="h3"
+                className="text-halal-800 flex items-center gap-2"
+              >
+                <ThermometerIcon className="text-halal-600 size-6 shrink-0" />
+                Proses pengasapan
+              </CardTitle>
 
-            <ol className="text-halal-800 mt-block space-y-2.5">
-              {produk.pengasapan.langkah.map((langkah, index) => (
-                <li key={langkah} className="flex gap-3">
-                  <span
-                    className="bg-halal-600 tabular mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white"
-                    aria-hidden
-                  >
-                    {index + 1}
-                  </span>
-                  <span>{langkah}</span>
-                </li>
-              ))}
-            </ol>
+              <ol className="text-halal-800 mt-block space-y-2.5">
+                {produk.pengasapan.langkah.map((langkah, index) => (
+                  <li key={langkah} className="flex gap-3">
+                    <span
+                      className="bg-halal-600 tabular mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white"
+                      aria-hidden
+                    >
+                      {index + 1}
+                    </span>
+                    <span>{langkah}</span>
+                  </li>
+                ))}
+              </ol>
 
-            <dl className="border-halal-300 mt-block border-t pt-4">
-              <div className="grid gap-x-6 sm:grid-cols-3">
-                <div className="border-halal-300 border-b py-2 sm:border-b-0">
-                  <dt className="text-halal-800/80 text-sm">Kayu</dt>
-                  <dd className="text-halal-800 font-medium">
-                    {produk.pengasapan.jenisKayu}
-                  </dd>
+              <dl className="border-halal-300 mt-block border-t pt-4">
+                <div className="grid gap-x-6 sm:grid-cols-3">
+                  <div className="border-halal-300 border-b py-2 sm:border-b-0">
+                    <dt className="text-halal-800/80 text-sm">Kayu</dt>
+                    <dd className="text-halal-800 font-medium">
+                      {produk.pengasapan.jenisKayu}
+                    </dd>
+                  </div>
+                  <div className="border-halal-300 border-b py-2 sm:border-b-0">
+                    <dt className="text-halal-800/80 text-sm">Suhu</dt>
+                    <dd className="text-halal-800 font-medium">
+                      {produk.pengasapan.suhu}
+                    </dd>
+                  </div>
+                  <div className="py-2">
+                    <dt className="text-halal-800/80 text-sm">
+                      Lama pengasapan
+                    </dt>
+                    <dd className="text-halal-800 font-medium">
+                      {produk.pengasapan.durasi}
+                    </dd>
+                  </div>
                 </div>
-                <div className="border-halal-300 border-b py-2 sm:border-b-0">
-                  <dt className="text-halal-800/80 text-sm">Suhu</dt>
-                  <dd className="text-halal-800 font-medium">
-                    {produk.pengasapan.suhu}
-                  </dd>
-                </div>
-                <div className="py-2">
-                  <dt className="text-halal-800/80 text-sm">Lama pengasapan</dt>
-                  <dd className="text-halal-800 font-medium">
-                    {produk.pengasapan.durasi}
-                  </dd>
-                </div>
-              </div>
-            </dl>
-          </CardBody>
-        </Card>
+              </dl>
+            </CardBody>
+          </Card>
+        </Reveal>
 
         <div className="mt-block grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardBody>
-              <CardTitle as="h3">Cara penyimpanan</CardTitle>
-              <dl className="mt-block">
-                <BarisData
-                  label="Di kulkas"
-                  nilai={produk.penyimpanan.suhuKulkas}
-                />
-                <BarisData
-                  label="Di freezer"
-                  nilai={produk.penyimpanan.suhuFreezer}
-                />
-              </dl>
-              <ul className="text-content-soft mt-block space-y-2.5">
-                {produk.penyimpanan.catatan.map((catatan) => (
-                  <Butir key={catatan}>{catatan}</Butir>
-                ))}
-              </ul>
-            </CardBody>
-          </Card>
+          <Reveal jeda={jedaBertahap(0)}>
+            <Card>
+              <CardBody>
+                <CardTitle as="h3">Cara penyimpanan</CardTitle>
+                <dl className="mt-block">
+                  <BarisData
+                    label="Di kulkas"
+                    nilai={produk.penyimpanan.suhuKulkas}
+                  />
+                  <BarisData
+                    label="Di freezer"
+                    nilai={produk.penyimpanan.suhuFreezer}
+                  />
+                </dl>
+                <ul className="text-content-soft mt-block space-y-2.5">
+                  {produk.penyimpanan.catatan.map((catatan) => (
+                    <Butir key={catatan}>{catatan}</Butir>
+                  ))}
+                </ul>
+              </CardBody>
+            </Card>
+          </Reveal>
 
-          <Card>
-            <CardBody>
-              <CardTitle as="h3">Masa simpan</CardTitle>
-              <p className="text-content-muted mt-2 text-sm">
-                Terhitung sejak tanggal produksi yang tercetak di kemasan,
-                selama kemasan vakum belum dibuka.
-              </p>
-              <dl className="mt-block">
-                <BarisData
-                  label="Suhu ruang"
-                  nilai={produk.penyimpanan.masaSimpanSuhuRuang}
-                />
-                <BarisData
-                  label="Kulkas"
-                  nilai={produk.penyimpanan.masaSimpanKulkas}
-                />
-                <BarisData
-                  label="Freezer"
-                  nilai={produk.penyimpanan.masaSimpanFreezer}
-                />
-              </dl>
-              <p className="mt-block">
-                <Badge tone="halal" icon={<ShieldCheckIcon className="size-4" />}>
-                  Dikemas vakum
-                </Badge>
-              </p>
-            </CardBody>
-          </Card>
+          <Reveal jeda={jedaBertahap(1)}>
+            <Card>
+              <CardBody>
+                <CardTitle as="h3">Masa simpan</CardTitle>
+                <p className="text-content-muted mt-2 text-sm">
+                  Terhitung sejak tanggal produksi yang tercetak di kemasan,
+                  selama kemasan vakum belum dibuka.
+                </p>
+                <dl className="mt-block">
+                  <BarisData
+                    label="Suhu ruang"
+                    nilai={produk.penyimpanan.masaSimpanSuhuRuang}
+                  />
+                  <BarisData
+                    label="Kulkas"
+                    nilai={produk.penyimpanan.masaSimpanKulkas}
+                  />
+                  <BarisData
+                    label="Freezer"
+                    nilai={produk.penyimpanan.masaSimpanFreezer}
+                  />
+                </dl>
+                <p className="mt-block">
+                  <Badge
+                    tone="halal"
+                    icon={<ShieldCheckIcon className="size-4" />}
+                  >
+                    Dikemas vakum
+                  </Badge>
+                </p>
+              </CardBody>
+            </Card>
+          </Reveal>
         </div>
 
         <CatatanPlaceholder
@@ -381,6 +429,21 @@ export default async function HalamanDetailProduk({
       <Section tone="sunken" id="beli">
         <div className="mx-auto max-w-xl">
           <AksiPembelian />
+
+          {/* Jalan keluar di dasar halaman. Remah roti di puncak halaman
+              memang sudah menuju katalog, tapi di HP pembeli yang sampai
+              ke sini sudah menggulir jauh — dan menyuruhnya menggulir
+              balik ke atas hanya untuk melihat produk lain adalah cara
+              paling mudah kehilangan penjualan kedua. */}
+          <p className="mt-block text-center">
+            <Link
+              href="/produk"
+              className="text-content-soft hover:text-content inline-flex min-h-11 items-center gap-1.5 font-medium transition-colors"
+            >
+              <span aria-hidden>&larr;</span>
+              Lihat semua produk
+            </Link>
+          </p>
         </div>
       </Section>
     </PembelianProvider>

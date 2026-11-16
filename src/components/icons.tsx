@@ -106,3 +106,21 @@ export function MenuIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+/** Silang — menutup panel menu HP. */
+export function CloseIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M6 6l12 12M18 6 6 18" />
+    </svg>
+  );
+}
+
+/** Panah kanan — penanda arah pada baris menu yang bisa ditekan. */
+export function ChevronRightIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="m9.5 5 7 7-7 7" />
+    </svg>
+  );
+}

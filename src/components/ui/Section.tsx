@@ -52,6 +52,7 @@ export function Section({
   title,
   description,
   headingLevel: Heading = "h2",
+  reveal = false,
   id,
   className,
   children,
@@ -61,6 +62,15 @@ export function Section({
   description?: string;
   /* Bisa diatur agar urutan h1→h2→h3 tidak pernah melompat. */
   headingLevel?: "h1" | "h2" | "h3";
+  /**
+   * Ikut sertakan blok judul dalam animasi "muncul saat masuk layar".
+   *
+   * Sengaja opt-in per pemakaian, bukan menyala untuk semua seksi:
+   * seksi yang sudah berada di layar pertama tidak perlu dianimasikan —
+   * ia sudah terlihat, dan menganimasikannya justru menunda hal yang
+   * seharusnya langsung terbaca. Lihat catatan LCP di Reveal.tsx.
+   */
+  reveal?: boolean;
   id?: string;
   className?: string;
   children: ReactNode;
@@ -74,7 +84,10 @@ export function Section({
     >
       <Container>
         {(title || description) && (
-          <div className="mb-block max-w-2xl">
+          <div
+            data-reveal={reveal ? "" : undefined}
+            className="mb-block max-w-2xl"
+          >
             {title && (
               <Heading
                 className={cn(

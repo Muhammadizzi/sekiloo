@@ -17,7 +17,8 @@ type BadgeTone =
   | "info"
   | "warn"
   | "danger"
-  | "onDark";
+  | "onDark"
+  | "overlay";
 
 const tones: Record<BadgeTone, string> = {
   halal: "bg-halal-50 text-halal-800 border-halal-300",
@@ -28,6 +29,11 @@ const tones: Record<BadgeTone, string> = {
   danger: "bg-danger/10 text-danger border-danger/30",
   /* Untuk dipakai DI ATAS zona gelap. */
   onDark: "bg-on-dark/10 text-on-dark-soft border-ink-500",
+  /* Untuk dipakai DI ATAS foto/gambar, di mana warna latarnya tidak bisa
+     diketahui sebelumnya. Karena itu ia memakai latar PEKAT (bukan tembus
+     pandang) — satu-satunya cara menjamin kontras teksnya tetap terpenuhi
+     berapa pun terang foto di belakangnya. */
+  overlay: "bg-surface text-content-soft border-line-strong shadow-card",
 };
 
 export function Badge({

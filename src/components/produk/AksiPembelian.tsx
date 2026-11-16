@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/Badge";
 import { CartIcon, MapPinIcon, PhoneIcon } from "@/components/icons";
 import { formatRupiah } from "@/lib/format";
 import { tautanWhatsApp } from "@/data/kontak";
-import { statusStok, usePembelian } from "./PembelianContext";
+import { statusStok } from "@/lib/stok";
+import { usePembelian } from "./PembelianContext";
 
 /**
  * Indikator stok + dua aksi penutup halaman.
@@ -27,16 +28,15 @@ export function AksiPembelian() {
   const stok = statusStok(
     rincian.stok,
     product.ambangStokMenipis,
-    product.satuanStok,
+    product.satuan,
   );
 
   /* Stok dihitung per zona: memilih Cikarang berarti membaca tumpukan
      Cikarang, bukan tumpukan Pasar/Rumah Produksi. Habis di satu zona
      tidak berarti habis di zona lain. */
-  const keteranganStok =
-    stok.bisaBeli
-      ? `${kalimatStok} Stok berkurang saat pembayaran masuk, bukan saat dipesan.`
-      : `${kalimatStok} Coba titik ambil lain, atau tanyakan jadwal batch berikutnya lewat WhatsApp.`;
+  const keteranganStok = stok.bisaBeli
+    ? `${kalimatStok} Stok berkurang saat pembayaran masuk, bukan saat dipesan.`
+    : `${kalimatStok} Coba titik ambil lain, atau tanyakan jadwal batch berikutnya lewat WhatsApp.`;
 
   const bisaBeli = stok.bisaBeli;
 
@@ -67,6 +67,9 @@ export function AksiPembelian() {
               jadi tiga baris pendek yang sulit dibaca. */}
           <p className="tabular text-content mt-1.5 text-3xl font-semibold">
             {formatRupiah(rincian.harga)}
+            <span className="text-content-muted ml-1.5 text-base font-normal">
+              / {product.satuan}
+            </span>
           </p>
           <p className="text-content-muted mt-0.5 text-sm">
             {product.ukuranKemasan}
