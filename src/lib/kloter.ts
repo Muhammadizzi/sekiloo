@@ -17,6 +17,29 @@ export async function ambilKloterTerbaru(): Promise<HasilKloter> {
   return ambilKloterPertama(await bacaPublik<Kloter[]>(JALUR_KLOTER, "tanpa-cache"));
 }
 
+export type AlasanTidakBisaPesan = "gagal" | "tidak-ada" | "tutup" | "penuh";
+
+export type StatusPemesanan =
+  | { bisa: true; kloter: Kloter }
+  | { bisa: false; alasan: AlasanTidakBisaPesan; kloter: Kloter | null };
+
+export const PESAN_TIDAK_BISA_PESAN: Record<AlasanTidakBisaPesan, string> = {
+  gagal: "Status kloter belum bisa dimuat. Muat ulang halaman ini sebentar lagi.",
+  "tidak-ada": "Belum ada kloter yang buka. Jadwal berikutnya kami umumkan lewat WhatsApp.",
+  tutup: "Pemesanan kloter ini sudah ditutup.",
+  penuh: "Kapasitas kloter ini sudah habis.",
+};
+
+/** `sekarang` dari useKloterSegar, supaya status berganti tepat di jam tutup checkout. */
+export function statusPemesanan(hasil: HasilKloter, sekarang: number): StatusPemesanan {
+  if (!hasil.ok) return { bisa: false, alasan: "gagal", kloter: null };
+  const kloter = hasil.data;
+  if (!kloter) return { bisa: false, alasan: "tidak-ada", kloter: null };
+  if (sekarang >= Date.parse(kloter.checkout_closes_at)) return { bisa: false, alasan: "tutup", kloter };
+  if (kloter.remaining_gram <= 0) return { bisa: false, alasan: "penuh", kloter };
+  return { bisa: true, kloter };
+}
+
 export type Kapasitas = {
   persenTerisi: number;
   teksSisa: string;

@@ -2,12 +2,10 @@ import Link from "next/link";
 import { Container } from "@/components/ui/Section";
 import { ShieldCheckIcon } from "@/components/icons";
 import { NOMOR_SERTIFIKAT_HALAL } from "@/data/halal";
+import { TombolKeranjangHeader } from "@/components/keranjang/TombolKeranjangHeader";
 import { Wordmark } from "./Wordmark";
 
-/**
- * Header global, zona gelap. Ringkas (56px di HP) karena ruang vertikal di layar kecil mahal.
- * Tombol keranjang kembali di langkah keranjang; tombol yang belum bisa apa-apa tidak ditampilkan.
- */
+/** Header global, zona gelap. Ringkas (56px di HP) karena ruang vertikal di layar kecil mahal. */
 export function Header() {
   return (
     <header className="bg-ink-900 border-ink-700 sticky top-0 z-40 border-b">
@@ -31,6 +29,7 @@ export function Header() {
             >
               Produk
             </Link>
+            <TombolKeranjangHeader />
           </nav>
         </div>
       </Container>

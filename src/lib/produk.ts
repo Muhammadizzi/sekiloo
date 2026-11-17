@@ -17,12 +17,14 @@ export type Produk = {
   satuan: Satuan;
   deskripsi: string;
   beratIsiGram: number;
+  /** Berat setelah dikemas. Kapasitas kloter dan batas berat per pesanan dihitung dari angka ini. */
+  beratKirimGram: number;
   harga: number;
   fotoUrl: string | null;
 };
 
 export const KOLOM_PRODUK =
-  "id,slug,name,category,unit_type,description,net_weight_gram,price,image_path";
+  "id,slug,name,category,unit_type,description,net_weight_gram,ship_weight_gram,price,image_path";
 
 const LABEL_SATUAN: Record<Satuan, string> = {
   ekor: "per ekor",
@@ -46,9 +48,12 @@ export const KELOMPOK_KATALOG: { judul: string; kategori: Kategori[] }[] = [
  * datanya belum lengkap di sini berarti ada yang janggal dan dilewati, bukan ditampilkan setengah.
  */
 export function keProduk(
-  baris: Pick<BarisProduk, "id" | "slug" | "name" | "category" | "unit_type" | "description" | "net_weight_gram" | "price" | "image_path">,
+  baris: Pick<
+    BarisProduk,
+    "id" | "slug" | "name" | "category" | "unit_type" | "description" | "net_weight_gram" | "ship_weight_gram" | "price" | "image_path"
+  >,
 ): Produk | null {
-  if (baris.price === null || baris.net_weight_gram === null) return null;
+  if (baris.price === null || baris.net_weight_gram === null || baris.ship_weight_gram === null) return null;
 
   return {
     id: baris.id,
@@ -62,6 +67,7 @@ export function keProduk(
       : "bungkus",
     deskripsi: baris.description,
     beratIsiGram: baris.net_weight_gram,
+    beratKirimGram: baris.ship_weight_gram,
     harga: baris.price,
     fotoUrl: urlFotoProduk(baris.image_path),
   };

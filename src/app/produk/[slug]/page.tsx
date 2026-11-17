@@ -8,11 +8,13 @@ import { teksBerat } from "@/components/produk/KartuProduk";
 import { PesanKeadaan } from "@/components/ui/PesanKeadaan";
 import { Container, Section } from "@/components/ui/Section";
 import { TombolMuatUlang } from "@/components/ui/TombolMuatUlang";
-import { ambilProduk, ambilProdukAktif } from "@/data/katalog";
+import { ambilKloterBuka, ambilProduk, ambilProdukAktif } from "@/data/katalog";
+import { AksiKeranjang } from "@/components/keranjang/AksiKeranjang";
 import { formatRupiah } from "@/lib/format";
 import { labelSatuan } from "@/lib/produk";
 
-export const revalidate = 300;
+// Ikut umur cache kloter (60 detik), karena tombol keranjang bergantung pada kloter yang buka.
+export const revalidate = 60;
 
 // Produk yang baru diaktifkan setelah build tetap bisa dibuka; dirender saat pertama diminta.
 export async function generateStaticParams() {
@@ -34,7 +36,7 @@ export async function generateMetadata({ params }: PageProps<"/produk/[slug]">):
 
 export default async function HalamanProduk({ params }: PageProps<"/produk/[slug]">) {
   const { slug } = await params;
-  const hasil = await ambilProduk(slug);
+  const [hasil, kloter] = await Promise.all([ambilProduk(slug), ambilKloterBuka()]);
 
   if (!hasil.ok) {
     return (
@@ -94,9 +96,13 @@ export default async function HalamanProduk({ params }: PageProps<"/produk/[slug
               <p className="text-content-soft mt-block max-w-prose text-lg">{produk.deskripsi}</p>
             )}
 
-            <CatatanPlaceholder judul="tombol tambah ke keranjang menyusul" className="mt-block">
-              <p>Tombolnya dibuat di langkah keranjang dan checkout (PRD Bagian 24, Fase 1 langkah 3).</p>
-            </CatatanPlaceholder>
+            <div className="mt-block">
+              <AksiKeranjang
+                produk={{ id: produk.id, nama: produk.nama }}
+                kloterAwal={kloter.hasil}
+                waktuRender={kloter.diambilPada}
+              />
+            </div>
 
             <div className="border-line mt-block border-t pt-block">
               <h2 className="text-content text-xl font-semibold">Cara simpan</h2>

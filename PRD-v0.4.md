@@ -452,7 +452,7 @@ Prinsipnya: browser dan APK tidak pernah dipercaya untuk harga, ongkir, kapasita
 ### 14.2 Aturan wajib
 - `admin_roles` tidak punya aturan tulis untuk aplikasi mana pun. Role diubah hanya lewat dashboard Supabase.
 - Supabase Auth: pendaftaran dimatikan, 2FA (TOTP) wajib, dan semua aturan serta fungsi admin mengecek sesi `aal2`.
-- Kunci rahasia (`SUPABASE_SERVICE_ROLE_KEY`, `MIDTRANS_SERVER_KEY`, `REVALIDATION_SECRET`, dan nanti kunci API WhatsApp serta AI) hanya disimpan di environment variable Netlify. APK hanya membawa URL Supabase dan anon key. Setiap file yang memakai kunci rahasia diberi `import "server-only"`, supaya build langsung gagal kalau file itu terbawa ke browser.
+- Kunci rahasia (`SUPABASE_SECRET_KEY`, `TURNSTILE_SECRET_KEY`, `IP_HASH_SALT`, `MIDTRANS_SERVER_KEY`, `REVALIDATION_SECRET`, dan nanti kunci API WhatsApp serta AI) hanya disimpan di environment variable Netlify. APK hanya membawa URL Supabase dan anon key. Setiap file yang memakai kunci rahasia diberi `import "server-only"`, supaya build langsung gagal kalau file itu terbawa ke browser.
 - Anti-spam checkout: captcha tak terlihat (Cloudflare Turnstile) sejak MVP, maksimal 2 pesanan menunggu bayar per nomor WhatsApp, 5 checkout per IP per jam, 10 unit per produk, dan berat maksimal per pesanan (angka awal). Tanpa ini, seseorang bisa mengunci kapasitas dengan banyak pesanan yang tidak dibayar menjelang tutup PO. Pembeli asli jadi tidak bisa memesan, dan kloter bisa jatuh di bawah minimum lalu batal.
 - Upload foto (produk, bukti antar, testimoni): hanya JPG, PNG, atau WEBP, maksimal 2 MB, dicek dari isi file (bukan nama file), diproses ulang, dan metadata EXIF dibuang. Foto dari HP bisa menyimpan lokasi GPS rumah. Foto bukti antar dan bukti refund disimpan di bucket privat (Bagian 12).
 - APK: dikunci sidik jari atau PIN setiap dibuka, dan aksi sensitif (refund, batalkan kloter atau pesanan, ubah jadwal) wajib verifikasi ulang. 2FA hanya melindungi saat login, bukan sesi yang sudah aktif di HP yang hilang. Keystore di-backup, file APK dibagikan lewat link privat. Kalau HP admin hilang: ganti password, keluarkan semua perangkat, reset 2FA.
@@ -658,6 +658,10 @@ Kontras teks memenuhi WCAG AA, target sentuh minimal 44 px, zoom tidak dikunci, 
 | 17 Nov 2026 | Hero beranda sementara memakai foto ilustrasi berketerangan "Foto ilustrasi", sampai foto proses pengasapan asli tersedia |
 | 17 Nov 2026 | Menggantikan dua keputusan di atas (label tegak di tepi hero dan foto ilustrasi): teks tegak jadi menu empat kolom di hero beranda, terinspirasi referensi kolom tegak yang dibawa pemilik. Label tegak, keterangan kecil di samping kata, dan foto ilustrasi dihapus |
 | 17 Nov 2026 | Nama usaha berganti dari sekiloo ke Sealauk (dibaca Si-lauk): seal (segel vakum) dan lauk. Awalan invoice ikut berganti dari `SKL-` ke `SLK-` lewat migrasi `ganti_nama_sealauk`. Logo dan font dibuat pemilik |
+| 17 Nov 2026 | Keranjang disimpan di localStorage HP pembeli, berisi id produk dan jumlah saja. Harga dan berat selalu dari data terbaru, dan isi dari kloter yang sudah lewat tidak bisa dipesan |
+| 17 Nov 2026 | Checkout memakai Server Action: validasi ulang di server, verifikasi Turnstile, IP disimpan sebagai hash bergaram, lalu `create_order` dipanggil dengan secret key. Data pembeli tidak ditulis ke log server |
+| 17 Nov 2026 | Pin peta wajib dipasang sendiri oleh pembeli (ketuk peta, pakai lokasi HP, atau taruh di tengah peta). Titik tengah kecamatan tidak dipakai sebagai lokasi rumah |
+| 17 Nov 2026 | Halaman `/privasi` dan `/syarat` dibuat sementara berisi poin yang sudah diputuskan, supaya tautan persetujuan di checkout tidak mati. Isi lengkapnya di langkah 6, wajib selesai sebelum pemesanan dibuka |
 
 ---
 
@@ -712,7 +716,7 @@ Kontras teks memenuhi WCAG AA, target sentuh minimal 44 px, zoom tidak dikunci, 
 **Fase 1: MVP**
 1. Skema database, RLS, fungsi `create_order`, aturan status, `pg_cron`, sebagai file migrasi di repo. Selesai 17 Nov 2026, 59 cek di `supabase/tests/uji_skema.sql` lolos.
 2. Katalog dan kartu kloter aktif di web. Selesai 17 Nov 2026: beranda, `/produk`, `/produk/[slug]`, dan semua keadaan kartu kloter (contohnya di `/styleguide#kloter`). Bagian halal ringkas dan FAQ di beranda menyusul bersama halamannya di langkah 6.
-3. Keranjang dan checkout dengan peta.
+3. Keranjang dan checkout dengan peta. Dibangun 17 Nov 2026: keranjang di HP pembeli terikat ke kloter yang buka, checkout dengan pin peta, captcha Turnstile, dan pemanggilan `create_order` lewat Server Action. Diuji dengan data contoh; uji ujung ke ujung menunggu `SUPABASE_SECRET_KEY` dan kloter percobaan. Setelah pesanan dibuat, untuk sementara tampil konfirmasi nomor pesanan dan batas bayar, karena tombol bayar dan halaman status masuk langkah 4.
 4. Midtrans Snap, webhook, halaman status, Cek Pesanan.
 5. APK admin untuk kedua role.
 6. Halaman Halal & Keamanan Pangan, Kebijakan Privasi, Syarat Pemesanan, FAQ.

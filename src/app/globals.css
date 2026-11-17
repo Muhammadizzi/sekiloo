@@ -187,6 +187,14 @@ p {
   border-radius: var(--radius-xs);
 }
 
+/* Tombol zoom peta checkout dibesarkan ke 44px (PRD 19.3). Selektornya lebih spesifik dari bawaan Leaflet. */
+.leaflet-container .leaflet-bar a,
+.leaflet-container.leaflet-touch .leaflet-bar a {
+  width: 44px;
+  height: 44px;
+  line-height: 44px;
+}
+
 /* Hormati preferensi pengguna yang sensitif terhadap gerak. */
 @media (prefers-reduced-motion: reduce) {
   *,

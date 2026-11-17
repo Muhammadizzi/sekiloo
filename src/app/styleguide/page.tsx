@@ -72,6 +72,7 @@ const PRODUK_CONTOH: Produk = {
   satuan: "ekor",
   deskripsi: "",
   beratIsiGram: 450,
+  beratKirimGram: 500,
   harga: 40000,
   fotoUrl: null,
 };

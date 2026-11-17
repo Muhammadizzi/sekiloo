@@ -1,21 +1,14 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody } from "@/components/ui/Card";
 import { TombolMuatUlang } from "@/components/ui/TombolMuatUlang";
 import { formatJamWib, formatTanggalKalender, formatTanggalWib } from "@/lib/format";
-import { ambilKloterTerbaru, hitungKapasitas, type HasilKloter, type Kloter } from "@/lib/kloter";
+import { hitungKapasitas, type HasilKloter, type Kloter } from "@/lib/kloter";
+import { useKloterSegar } from "./useKloterSegar";
 
-// Batas setTimeout di browser (sekitar 24 hari). Tenggat yang lebih jauh tidak perlu dijadwalkan.
-const MAKS_TIMEOUT = 2_147_483_647;
-const JEDA_SEGARKAN = 30_000;
-
-/**
- * Halaman berasal dari cache, jadi kartu ini memperbarui dirinya sendiri dari browser:
- * saat dibuka, dan saat pembeli kembali ke tab ini (biasanya setelah pindah dari WhatsApp).
- * Status "tutup" juga dihitung ulang tepat di tenggatnya, bukan menunggu cache kedaluwarsa.
- */
+/** Sisa kapasitas dan status tutup tetap segar walau halamannya dari cache (lihat useKloterSegar). */
 export function KartuKloter({
   awal,
   waktuRender,
@@ -27,44 +20,8 @@ export function KartuKloter({
   /** Matikan untuk contoh di /styleguide. */
   segarkan?: boolean;
 }) {
-  const [hasil, setHasil] = useState(awal);
-  const [sekarang, setSekarang] = useState(waktuRender);
-
-  useEffect(() => {
-    if (!segarkan) return;
-    let aktif = true;
-    let terakhir = 0;
-
-    const muat = () => {
-      if (Date.now() - terakhir < JEDA_SEGARKAN) return;
-      terakhir = Date.now();
-      // Gagal menyegarkan tidak menimpa data dari server.
-      void ambilKloterTerbaru().then((baru) => {
-        if (aktif && baru.ok) setHasil(baru);
-      });
-    };
-    const saatTerlihat = () => {
-      if (document.visibilityState === "visible") muat();
-    };
-
-    muat();
-    document.addEventListener("visibilitychange", saatTerlihat);
-    return () => {
-      aktif = false;
-      document.removeEventListener("visibilitychange", saatTerlihat);
-    };
-  }, [segarkan]);
-
+  const { hasil, sekarang } = useKloterSegar(awal, waktuRender, segarkan);
   const kloter = hasil.ok ? hasil.data : null;
-  const batasCheckout = kloter?.checkout_closes_at;
-
-  useEffect(() => {
-    if (!batasCheckout) return;
-    const sisa = Date.parse(batasCheckout) - Date.now();
-    if (sisa > MAKS_TIMEOUT) return;
-    const pewaktu = window.setTimeout(() => setSekarang(Date.now()), Math.max(0, sisa));
-    return () => window.clearTimeout(pewaktu);
-  }, [batasCheckout]);
 
   return (
     // Satu-satunya kartu terangkat di beranda: inilah yang menjawab "bisa pesan sekarang atau tidak".

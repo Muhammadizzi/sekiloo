@@ -37,23 +37,25 @@ export async function ambilProduk(slug: string): Promise<Hasil<Produk | null>> {
   return { ok: true, data: hasil.data[0] ? keProduk(hasil.data[0]) : null };
 }
 
-export type Wilayah = { id: string; nama: string; ongkir: number };
+export type Wilayah = { id: string; nama: string; ongkir: number; pusat: [number, number] };
 
 type BarisWilayah = Pick<
   Database["public"]["Tables"]["service_areas"]["Row"],
-  "id" | "name" | "delivery_fee"
+  "id" | "name" | "delivery_fee" | "center_lat" | "center_lng"
 >;
 
 export async function ambilWilayahAktif(): Promise<Hasil<Wilayah[]>> {
   const hasil = await bacaPublik<BarisWilayah[]>(
-    "service_areas?select=id,name,delivery_fee&is_active=eq.true&order=sort_order.asc,name.asc",
+    "service_areas?select=id,name,delivery_fee,center_lat,center_lng&is_active=eq.true&order=sort_order.asc,name.asc",
     CACHE_KATALOG,
   );
   if (!hasil.ok) return hasil;
   return {
     ok: true,
     data: hasil.data.flatMap((w) =>
-      w.delivery_fee === null ? [] : [{ id: w.id, nama: w.name, ongkir: w.delivery_fee }],
+      w.delivery_fee === null
+        ? []
+        : [{ id: w.id, nama: w.name, ongkir: w.delivery_fee, pusat: [w.center_lat, w.center_lng] as [number, number] }],
     ),
   };
 }

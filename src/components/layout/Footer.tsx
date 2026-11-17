@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Container } from "@/components/ui/Section";
 import { PhoneIcon, ShieldCheckIcon } from "@/components/icons";
 import { tautanWhatsApp } from "@/data/kontak";
@@ -48,8 +49,16 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="border-ink-700 border-t py-6 text-sm">
+        <div className="border-ink-700 flex flex-col gap-2 border-t py-6 text-sm sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} Sealauk</p>
+          <nav aria-label="Kebijakan" className="flex gap-4">
+            <Link href="/privasi" className="hover:text-on-dark inline-flex min-h-11 items-center underline-offset-4 hover:underline">
+              Kebijakan Privasi
+            </Link>
+            <Link href="/syarat" className="hover:text-on-dark inline-flex min-h-11 items-center underline-offset-4 hover:underline">
+              Syarat Pemesanan
+            </Link>
+          </nav>
         </div>
       </Container>
     </footer>
