@@ -5,7 +5,7 @@ import { Card, CardBody } from "@/components/ui/Card";
 import { NOMOR_WHATSAPP, tautanWhatsApp } from "@/data/kontak";
 import type { PesananTampil } from "@/data/pesanan";
 import { cn } from "@/lib/cn";
-import { formatJamWib, formatRupiah, formatTanggalKalender, formatTanggalWib } from "@/lib/format";
+import { formatJamWib, formatNomorTampil, formatRupiah, formatTanggalKalender, formatTanggalWib } from "@/lib/format";
 import { labelSatuan, SATUAN, type Satuan } from "@/lib/produk";
 import { ALASAN_BATAL, LANGKAH_PESANAN, urutanLangkah } from "@/lib/status-pesanan";
 import { SegarkanOtomatis } from "./SegarkanOtomatis";
@@ -13,11 +13,6 @@ import { TombolBuatTautan } from "./TombolBuatTautan";
 
 // Notifikasi lunas yang terlambat masih diterima 10 menit setelah batas bayar (PRD Bagian 22).
 const MASA_TENGGANG_MS = 10 * 60 * 1000;
-
-function nomorTampil(nomor: string): string {
-  const lokal = `0${nomor.slice(2)}`;
-  return lokal.replace(/(\d{4})(\d{4})(\d+)/, "$1 $2 $3");
-}
 
 export function TampilanPesanan({
   pesanan: p,
@@ -160,7 +155,7 @@ export function TampilanPesanan({
             <p className="text-halal-800 font-semibold">Waspada penipuan</p>
             <p className="text-halal-800 mt-1 text-sm">
               Admin Sealauk tidak pernah meminta kode OTP, PIN, password, atau biaya apa pun untuk refund. Nomor
-              WhatsApp resmi kami hanya <span className="tabular font-semibold">{nomorTampil(NOMOR_WHATSAPP)}</span>.
+              WhatsApp resmi kami hanya <span className="tabular font-semibold">{formatNomorTampil(NOMOR_WHATSAPP)}</span>.
             </p>
           </CardBody>
         </Card>

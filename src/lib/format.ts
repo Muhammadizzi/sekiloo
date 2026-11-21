@@ -59,3 +59,8 @@ export function formatTanggalKalender(tanggal: string): string {
   const d = new Date(Date.UTC(tahun, bulan - 1, hari));
   return `${HARI[d.getUTCDay()]}, ${hari} ${BULAN[bulan - 1]}`;
 }
+
+/** Nomor WhatsApp format 62 → "0812 3456 7890", supaya mudah dicocokkan pembeli dengan kontak di HP-nya. */
+export function formatNomorTampil(nomor: string): string {
+  return `0${nomor.slice(2)}`.replace(/(\d{4})(\d{4})(\d+)/, "$1 $2 $3");
+}

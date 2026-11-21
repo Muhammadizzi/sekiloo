@@ -98,6 +98,15 @@ export function CheckIcon({ className }: IconProps) {
   );
 }
 
+/** Panah ke bawah, untuk tanya jawab yang bisa dibuka dan ditutup. */
+export function ChevronDownIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
+
 /** Menu hamburger — navigasi HP. */
 export function MenuIcon({ className }: IconProps) {
   return (

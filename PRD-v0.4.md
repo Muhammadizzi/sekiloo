@@ -520,6 +520,7 @@ Kloter percobaan pertama hanya boleh dibuka kalau semua cek di bawah lolos. Cek 
 | 12 | Aplikasi admin terkunci | Buka APK, lalu coba proses refund | Diminta sidik jari atau PIN, lalu verifikasi ulang untuk refund |
 | 13 | Rencana insiden siap | Baca rencana di Bagian 14.3 | Penanggung jawab sudah terisi |
 | 14 | Backup bisa dipulihkan | Pulihkan backup terenkripsi ke project uji | Data utuh |
+| 15 | Tidak ada data contoh yang tayang | Buka semua halaman web dan cari teks "Catatan untuk pemilik", lalu pastikan `NOMOR_WHATSAPP` di `src/data/kontak.ts` sudah nomor asli | Tidak ditemukan, nomor asli |
 
 ---
 
@@ -686,6 +687,10 @@ Kontras teks memenuhi WCAG AA, target sentuh minimal 44 px, zoom tidak dikunci, 
 | 21 Nov 2026 | Jadwal kloter dipilih dari deretan tanggal dan jam bulat WIB, bukan diketik. Setelah jadwal kloter berpesanan lunas diubah, APK langsung menampilkan daftar pembeli yang perlu dikabari lewat WhatsApp |
 | 21 Nov 2026 | Foto dari APK (produk, bukti antar, bukti transfer) digambar ulang ke WebP lebar maksimal 1600 px sebelum diunggah, sehingga EXIF dan lokasi GPS terbuang |
 | 21 Nov 2026 | Cache katalog web diperbarui dari APK lewat `/api/admin/segarkan` dengan token sesi admin. `REVALIDATION_SECRET` tidak dipakai |
+| 21 Nov 2026 | Menggantikan keputusan 17 Nov soal halaman sementara: `/privasi`, `/syarat`, dan `/halal` ditulis lengkap. Aturan yang belum diputuskan (Bagian 23 no. 9 sampai 15) dan identitas pengelola data tidak dikarang. Nilainya diisi pemilik di `src/data/kebijakan.ts`, `src/data/halal.ts`, dan `src/data/keamanan-pangan.ts`. Selama masih kosong, halaman menampilkan catatan untuk pemilik di tempat aturan itu, dan begitu diisi, kalimatnya muncul sendiri |
+| 21 Nov 2026 | Pengecekan sertifikat halal diarahkan ke halaman pencarian resmi BPJPH (`bpjph.halal.go.id/cari/sertifikat`), dengan nomor sertifikat ditampilkan di samping tombolnya |
+| 21 Nov 2026 | FAQ ditaruh di beranda (`/#faq`) memakai `<details>`, tanpa halaman terpisah. Pertanyaan halal hanya muncul kalau nomor sertifikat sudah diisi. Beranda juga mendapat ringkasan keamanan pangan, dan footer mendapat tautan Tanya jawab serta Halal & Keamanan Pangan |
+| 21 Nov 2026 | Kebijakan Privasi menyebut semua layanan pihak lain yang dipakai situs: Midtrans, Supabase, Netlify, Cloudflare Turnstile, OpenStreetMap, dan WhatsApp. Situs tidak memasang pelacak iklan atau analitik |
 
 ---
 
@@ -743,7 +748,7 @@ Kontras teks memenuhi WCAG AA, target sentuh minimal 44 px, zoom tidak dikunci, 
 3. Keranjang dan checkout dengan peta. Dibangun 17 Nov 2026: keranjang di HP pembeli terikat ke kloter yang buka, checkout dengan pin peta, captcha Turnstile, dan pemanggilan `create_order` lewat Server Action. Diuji dengan data contoh; uji ujung ke ujung menunggu `SUPABASE_SECRET_KEY` dan kloter percobaan. Setelah pesanan dibuat, untuk sementara tampil konfirmasi nomor pesanan dan batas bayar, karena tombol bayar dan halaman status masuk langkah 4.
 4. Midtrans Snap, webhook, halaman status, Cek Pesanan. Dibangun 21 Nov 2026. Diuji: signature webhook (termasuk nominal yang diubah), semua keadaan halaman status dengan data contoh, Cek Pesanan, dan header keamanan. Uji ujung ke ujung menunggu `SUPABASE_SECRET_KEY`, kunci sandbox Midtrans, dan kloter percobaan.
 5. APK admin untuk kedua role. Dibangun 21 Nov 2026 di folder `admin/` (Expo SDK 58): login, 2FA TOTP, kunci sidik jari atau PIN, menu admin produksi (kloter, rekap, pesanan, refund, produk, wilayah) dan admin Cikarang (kloter, tandai tiba, daftar antar per kecamatan, aksi antar), serta tombol pesan WhatsApp. Diuji: 16 cek fungsi baca admin di `uji_skema.sql` (blok 4), semua layar dan alur di pratinjau web dengan data tiruan, bundel Android (`expo export`) tanpa kunci rahasia, dan endpoint `/api/admin/segarkan` menolak permintaan tanpa sesi admin. Belum diuji: login dan 2FA sungguhan (menunggu akun admin dan TOTP aktif di Supabase), kunci sidik jari, kamera, galeri, dan unggah foto di HP Android, serta build APK lewat EAS (menunggu akun Expo).
-6. Halaman Halal & Keamanan Pangan, Kebijakan Privasi, Syarat Pemesanan, FAQ.
+6. Halaman Halal & Keamanan Pangan, Kebijakan Privasi, Syarat Pemesanan, FAQ. Dibangun 21 Nov 2026: `/halal`, `/privasi`, `/syarat` dengan daftar isi, serta ringkasan keamanan pangan dan tanya jawab di beranda. Diuji di HP (375 px) dan desktop, termasuk semua keadaan "data sudah diisi" dengan data contoh sementara. Sebelum pemesanan dibuka, pemilik wajib mengisi tiga file data di atas sampai tidak ada lagi catatan untuk pemilik yang tampil.
 7. Uji dari awal sampai akhir di Midtrans sandbox, jalankan Daftar Cek Sebelum Rilis (Bagian 14.4), lalu buka satu kloter percobaan dengan pembeli terbatas.
 
 **Fase 2:** testimoni, artikel, notifikasi WhatsApp resmi, video hero, notifikasi push APK, kuota per produk bila perlu.

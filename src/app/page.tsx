@@ -1,14 +1,20 @@
 import Link from "next/link";
 
+import { DaftarTanya } from "@/components/faq/DaftarTanya";
 import { PenyediaGerak } from "@/components/gerak/PenyediaGerak";
+import { ShieldCheckIcon } from "@/components/icons";
 import { KartuKloter } from "@/components/kloter/KartuKloter";
 import { GridProduk } from "@/components/produk/GridProduk";
 import { Button } from "@/components/ui/Button";
+import { Card, CardBody } from "@/components/ui/Card";
 import { MenuTegak } from "@/components/ui/MenuTegak";
 import { PesanKeadaan } from "@/components/ui/PesanKeadaan";
 import { Container } from "@/components/ui/Section";
 import { TombolMuatUlang } from "@/components/ui/TombolMuatUlang";
+import { daftarTanyaJawab } from "@/data/faq";
+import { SERTIFIKAT_HALAL, URL_CEK_HALAL } from "@/data/halal";
 import { ambilKloterBuka, ambilProdukAktif, ambilWilayahAktif } from "@/data/katalog";
+import { tautanWhatsApp } from "@/data/kontak";
 import { MENU_BERANDA } from "@/data/navigasi";
 import { formatRupiah } from "@/lib/format";
 
@@ -33,6 +39,21 @@ const LANGKAH_PESAN = [
   {
     judul: "Diantar ke rumahmu",
     isi: "Admin kami di Cikarang mengantar pada tanggal antar kloter, dan mengabari lewat WhatsApp sebelum berangkat.",
+  },
+];
+
+const JAMINAN_PANGAN = [
+  {
+    judul: "Diasap sesuai pesanan",
+    isi: "Tidak ada stok yang menunggu di rak. Ikan diasap setelah PO ditutup, sebanyak pesanan yang sudah dibayar.",
+  },
+  {
+    judul: "Dikemas vakum",
+    isi: "Setiap kemasan diberi label nama produk, berat isi, tanggal produksi, kode kloter, dan cara simpan.",
+  },
+  {
+    judul: "Tetap dingin sampai rumahmu",
+    isi: "Dibawa dalam cool box dari desa, disimpan di freezer atau kulkas di Cikarang, lalu diantar dengan tas dingin.",
   },
 ];
 
@@ -202,6 +223,83 @@ export default async function Beranda() {
                 ))}
               </ul>
             )}
+          </div>
+        </Container>
+      </section>
+
+      <section
+        id="keamanan-pangan"
+        aria-labelledby="judul-keamanan-pangan"
+        className="bg-surface-sunken scroll-mt-16 py-section md:py-section-lg"
+      >
+        <Container>
+          <div className="grid gap-8 md:grid-cols-2 md:gap-12">
+            <div>
+              <h2 id="judul-keamanan-pangan" className="text-content text-3xl font-semibold md:text-4xl">
+                {SERTIFIKAT_HALAL ? "Halal dan keamanan pangan" : "Keamanan pangan"}
+              </h2>
+              <p className="text-content-muted mt-stack text-lg">
+                Ikan asap perlu dijaga dingin dari dapur sampai ke rumah. Begini caranya kami menjaga itu.
+              </p>
+              {SERTIFIKAT_HALAL && (
+                <Card variant="trust" className="mt-block">
+                  <CardBody>
+                    <p className="text-halal-800 flex items-center gap-2 font-semibold">
+                      <ShieldCheckIcon className="size-5" />
+                      Bersertifikat Halal
+                    </p>
+                    <p className="tabular text-halal-800 mt-1">No. {SERTIFIKAT_HALAL.nomor}</p>
+                    <a
+                      href={URL_CEK_HALAL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-halal-800 mt-2 inline-flex min-h-11 items-center font-semibold underline underline-offset-4"
+                    >
+                      Cek keaslian di situs BPJPH
+                    </a>
+                  </CardBody>
+                </Card>
+              )}
+            </div>
+
+            {/* Di HP daftar poin tampil sebelum tautan selengkapnya. Di layar lebar ia pindah ke kolom kanan. */}
+            <dl className="border-line bg-surface divide-line divide-y self-start rounded-lg border md:col-start-2 md:row-span-2 md:row-start-1">
+              {JAMINAN_PANGAN.map((j) => (
+                <div key={j.judul} className="px-4 py-4">
+                  <dt className="text-content font-semibold">{j.judul}</dt>
+                  <dd className="text-content-soft mt-1">{j.isi}</dd>
+                </div>
+              ))}
+            </dl>
+
+            <Link
+              href="/halal"
+              className="text-gold-700 -mt-4 inline-flex min-h-11 items-center self-start justify-self-start font-semibold underline-offset-4 hover:underline md:col-start-1 md:mt-0"
+            >
+              {SERTIFIKAT_HALAL ? "Sertifikat, proses, dan cara simpan" : "Proses, rantai dingin, dan cara simpan"}
+            </Link>
+          </div>
+        </Container>
+      </section>
+
+      <section id="faq" aria-labelledby="judul-faq" className="bg-surface scroll-mt-16 py-section md:py-section-lg">
+        <Container>
+          <div className="grid gap-8 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:gap-12">
+            <div className="md:sticky md:top-24 md:self-start">
+              <h2 id="judul-faq" className="text-content text-3xl font-semibold md:text-4xl">
+                Tanya jawab
+              </h2>
+              <p className="text-content-muted mt-stack text-lg">Yang paling sering ditanyakan soal PO per kloter.</p>
+              <a
+                href={tautanWhatsApp("Halo Sealauk, saya mau bertanya.")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gold-700 mt-stack inline-flex min-h-11 items-center font-semibold underline-offset-4 hover:underline"
+              >
+                Pertanyaan lain? Tanya lewat WhatsApp
+              </a>
+            </div>
+            <DaftarTanya daftar={daftarTanyaJawab()} />
           </div>
         </Container>
       </section>

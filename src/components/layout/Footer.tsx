@@ -55,6 +55,12 @@ export function Footer() {
             <Link href="/cek-pesanan" className="hover:text-on-dark inline-flex min-h-11 items-center underline-offset-4 hover:underline">
               Cek pesanan
             </Link>
+            <Link href="/#faq" className="hover:text-on-dark inline-flex min-h-11 items-center underline-offset-4 hover:underline">
+              Tanya jawab
+            </Link>
+            <Link href="/halal" className="hover:text-on-dark inline-flex min-h-11 items-center underline-offset-4 hover:underline">
+              Halal & Keamanan Pangan
+            </Link>
             <Link href="/privasi" className="hover:text-on-dark inline-flex min-h-11 items-center underline-offset-4 hover:underline">
               Kebijakan Privasi
             </Link>
