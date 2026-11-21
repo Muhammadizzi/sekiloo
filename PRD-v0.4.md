@@ -166,10 +166,11 @@ Aturan:
 - Nomor HP ditampilkan tersamar (0812****7890) dan alamat hanya sebagian, karena link bisa saja diteruskan ke orang lain. Halaman diberi `noindex`.
 - Halaman memakai header `Referrer-Policy: no-referrer`, supaya token di URL tidak ikut terkirim ke situs lain saat pembeli menekan link keluar.
 - Menampilkan nomor WhatsApp resmi Sealauk beserta peringatan anti-penipuan (Bagian 14.3).
-- Status lunas dibaca dari database hasil webhook, bukan dari parameter redirect Midtrans.
+- Status lunas dibaca dari database hasil webhook, bukan dari parameter redirect Midtrans. Selama menunggu bayar, halaman meminta data baru ke server tiap 6 detik saat tab terlihat, sampai 10 menit setelah batas bayar.
+- Halaman selalu dirender ulang per kunjungan (tidak di-cache) dan nama penerima hanya ditampilkan nama depannya.
 
 ### 6.5 Cek Pesanan
-Pembeli yang kehilangan link memasukkan nomor invoice dan nomor WhatsApp, lalu diarahkan ke halaman statusnya. Jumlah percobaan dibatasi per IP.
+Pembeli yang kehilangan link memasukkan nomor invoice dan nomor WhatsApp, lalu diarahkan ke halaman statusnya. Maksimal 10 percobaan per IP per jam, dihitung di database lewat fungsi `cari_pesanan`, ketemu atau tidak.
 
 ### 6.6 Kartu kloter aktif
 - Menampilkan jam tutup PO, tanggal antar, dan bar sisa kapasitas.
@@ -304,17 +305,20 @@ Alurnya: `pending` → `paid`, `expired`, atau `failed`. Dari `paid` bisa berlan
 ### 10.1 Midtrans Snap
 - Metode MVP: QRIS, karena potongannya paling kecil dan bisa dibayar dari hampir semua e-wallet dan m-banking. Virtual Account opsional (Bagian 23).
 - Transaksi dibuat server setelah pesanan dan kapasitasnya terkunci. `order_id` Midtrans memakai nomor invoice yang unik.
-- Custom expiry Midtrans = `expires_at` pesanan.
+- Custom expiry Midtrans = `expires_at` pesanan, dibulatkan ke bawah ke menit penuh supaya tidak pernah melewatinya. Kalau sisa waktunya kurang dari 1 menit, transaksi tidak dibuat.
+- Mode redirect: pembeli dibawa ke halaman bayar Midtrans, lalu kembali ke `/pesanan/[token]`. Snap.js dan client key tidak dipakai. Hanya `other_qris` yang diaktifkan.
+- Midtrans hanya menerima nomor pesanan dan total. Nama dan nomor HP pembeli tidak dikirim.
+- Kalau transaksi gagal dibuat, pesanan tetap ada dan halaman status menyediakan tombol untuk mencoba lagi.
 
 ### 10.2 Pemeriksaan webhook `/api/webhooks/midtrans`
 1. Cocokkan `signature_key` dengan SHA512(`order_id` + `status_code` + `gross_amount` + Server Key). Kalau tidak cocok, tolak.
-2. Disarankan: cek ulang status transaksi ke API Midtrans sebelum mengubah data.
+2. Status transaksi diambil ulang dari API Midtrans (`/v2/{order_id}/status`), dan data dari API itulah yang disimpan, bukan isi notifikasi.
 3. `gross_amount` harus sama dengan `total_amount` pesanan.
 4. Idempotensi: notifikasi dengan pasangan `transaction_id` dan `transaction_status` yang sama hanya diproses sekali. Semua notifikasi disimpan di tabel `payments`.
 5. `settlement` menjadikan pesanan lunas, selama `transaction_time` sebelum `expires_at`. `pending` tidak mengubah apa pun. `expire`, `cancel`, dan `deny` mengubah pembayaran menjadi `expired` atau `failed` dan melepas kapasitas.
 6. Pembayaran yang masuk untuk pesanan yang sudah `cancelled` otomatis menjadi `refund_pending` dan masuk daftar refund.
 7. Setelah status berubah, data kapasitas di web ikut diperbarui.
-8. Balas Midtrans dengan HTTP 200 secepatnya. Proses berat tidak dikerjakan di jalur webhook.
+8. Balas Midtrans dengan HTTP 200 secepatnya. Proses berat tidak dikerjakan di jalur webhook. Signature salah dibalas 401. Gangguan di pihak kita dibalas 500 supaya Midtrans mengirim ulang.
 
 ### 10.3 Refund
 - **Penyebab:** kloter di bawah minimum, kloter dibatalkan admin, gagal produksi, barang rusak di perjalanan, pembayaran masuk setelah pesanan batal, gagal antar dan perubahan jadwal (sesuai kebijakan masing-masing).
@@ -362,12 +366,13 @@ Angka suhu dan masa simpan hanya boleh diambil dari uji ketahanan produk, bukan 
 | `products` | `id`, `slug`, `name`, `category` (`ikan` / `kepala` / `jeroan` / `telur` / `pendamping`), `description`, `unit_type` (`ekor` / `pack_irisan` / `bungkus`), `net_weight_gram`, `ship_weight_gram`, `price`, `image_path`, `is_active`, `sort_order` | `price` dalam rupiah bulat, sudah termasuk kemasan vakum. Harga dan berat boleh kosong selama produk nonaktif. Produk baru bisa diaktifkan setelah `price`, `net_weight_gram`, dan `ship_weight_gram` terisi |
 | `service_areas` | `id`, `name`, `delivery_fee`, `center_lat`, `center_lng`, `is_active`, `sort_order` | Isi awal: Cikarang Utara, Barat, Selatan, Timur, Pusat. `delivery_fee` boleh kosong selama nonaktif. Wilayah baru bisa diaktifkan setelah ongkir terisi |
 | `po_batches` | `id`, `name`, `close_order_at`, `delivery_date`, `capacity_gram`, `max_order_weight_gram`, `min_weight_gram` (default 3000), `min_orders` (default 5), `status`, `cancel_reason`, `change_reason`, `created_by`, `created_at` | Maksimal satu kloter `open`. Kolom `status` tidak bisa diubah langsung, hanya lewat fungsi |
-| `orders` | `id`, `invoice_number`, `status_token`, `batch_id`, `buyer_name`, `buyer_phone`, `recipient_name`, `recipient_phone`, `area_id`, `address_text`, `address_note`, `lat`, `lng`, `subtotal`, `delivery_fee`, `total_amount`, `total_weight_gram`, `payment_status`, `order_status`, `cancel_reason`, `cancel_note`, `expires_at`, `paid_at`, `shipped_at`, `arrived_at`, `delivered_at`, `delivery_attempts`, `proof_photo_path`, `consent_at`, `created_at` | `status_token` acak 128 bit dan unik. Format invoice `SLK-YYMMDD-NNNN` |
+| `orders` | `id`, `invoice_number`, `status_token`, `batch_id`, `buyer_name`, `buyer_phone`, `recipient_name`, `recipient_phone`, `area_id`, `address_text`, `address_note`, `lat`, `lng`, `subtotal`, `delivery_fee`, `total_amount`, `total_weight_gram`, `payment_status`, `order_status`, `cancel_reason`, `cancel_note`, `expires_at`, `paid_at`, `shipped_at`, `arrived_at`, `delivered_at`, `delivery_attempts`, `proof_photo_path`, `consent_at`, `snap_token`, `snap_redirect_url`, `created_at` | `status_token` acak 128 bit dan unik. Format invoice `SLK-YYMMDD-NNNN`. `snap_redirect_url` wajib https |
 | `order_items` | `id`, `order_id`, `product_id`, `quantity`, `price_at_purchase`, `ship_weight_at_purchase_gram` | Harga dan berat dicatat saat pesan |
 | `payments` | `id`, `order_id`, `invoice_number`, `transaction_id`, `transaction_status`, `fraud_status`, `payment_type`, `gross_amount`, `transaction_time`, `outcome`, `raw_payload`, `received_at` | Unik pada (`transaction_id`, `transaction_status`) untuk idempotensi. `outcome` mencatat hasil pemrosesan, termasuk notifikasi yang ditolak |
 | `refunds` | `id`, `order_id`, `amount`, `reason`, `status` (`pending` / `done`), `proof_path`, `processed_by`, `processed_at` | Tanpa nomor rekening pembeli |
 | `status_log` | `id`, `order_id` atau `batch_id`, `actor_type` (`system` / `midtrans` / `admin`), `actor_id`, `from_status`, `to_status`, `note`, `created_at` | Diisi otomatis. Trigger menolak semua ubah dan hapus |
 | `checkout_attempts` | `id`, `ip_hash`, `created_at` | Untuk batas 5 checkout per IP per jam. Berisi hash, bukan IP asli. Dibersihkan setelah 1 hari |
+| `lookup_attempts` | `id`, `ip_hash`, `created_at` | Untuk batas 10 percobaan Cek Pesanan per IP per jam. Dibersihkan setelah 1 hari |
 | `testimonials` (Fase 2) | `id`, `order_id` (unik), `rating` (1-5), `comment`, `photo_path`, `is_published`, `created_at` | Ditambah kolom `orders.review_token` |
 | Artikel (Fase 2) | File MDX di repo | Tidak perlu tabel dan menu admin |
 
@@ -381,8 +386,12 @@ Angka suhu dan masa simpan hanya boleh diambil dari uji ketahanan produk, bukan 
 | `batch_depart`, `batch_cancel`, `order_cancel`, `refund_complete` | `admin_produksi` | Memberangkatkan kloter, membatalkan kloter atau pesanan, menyelesaikan refund dengan bukti transfer |
 | `batch_arrive`, `order_start_delivery`, `order_complete`, `order_delivery_failed` | `admin_cikarang` | Menandai kloter tiba dan mencatat pengantaran. `order_cancel` juga bisa dipakai, khusus setelah gagal antar |
 | `run_scheduled_jobs()` | `pg_cron`, tiap 5 menit | Membatalkan pesanan yang tidak dibayar, menutup atau membatalkan kloter yang lewat jam tutup, menandai kloter selesai |
+| `simpan_tautan_bayar(...)` | Server web | Menyimpan token dan tautan bayar Snap, hanya untuk pesanan yang masih menunggu bayar |
+| `cari_pesanan(...)` | Server web | Cek Pesanan: mengembalikan token status kalau nomor invoice dan nomor WhatsApp cocok, dengan batas percobaan per IP |
 
 Fungsi baca untuk APK (rekap produksi tanpa alamat, daftar antar untuk `admin_cikarang`) dibuat di langkah APK.
+
+Sejak migrasi `pembayaran_dan_cek_pesanan`, tabel, fungsi, dan sequence baru di skema `public` tidak lagi otomatis bisa diakses `anon` dan `authenticated`. Setiap migrasi wajib memberi `grant` secara eksplisit.
 
 **File di repo.** Migrasi di `supabase/migrations/`, data awal di `supabase/seed.sql`, uji fungsional di `supabase/tests/uji_skema.sql`. Tipe TypeScript dibuat otomatis dari skema ke `src/types/database.ts`.
 
@@ -662,6 +671,9 @@ Kontras teks memenuhi WCAG AA, target sentuh minimal 44 px, zoom tidak dikunci, 
 | 17 Nov 2026 | Checkout memakai Server Action: validasi ulang di server, verifikasi Turnstile, IP disimpan sebagai hash bergaram, lalu `create_order` dipanggil dengan secret key. Data pembeli tidak ditulis ke log server |
 | 17 Nov 2026 | Pin peta wajib dipasang sendiri oleh pembeli (ketuk peta, pakai lokasi HP, atau taruh di tengah peta). Titik tengah kecamatan tidak dipakai sebagai lokasi rumah |
 | 17 Nov 2026 | Halaman `/privasi` dan `/syarat` dibuat sementara berisi poin yang sudah diputuskan, supaya tautan persetujuan di checkout tidak mati. Isi lengkapnya di langkah 6, wajib selesai sebelum pemesanan dibuka |
+| 21 Nov 2026 | Pembayaran memakai Midtrans Snap mode redirect, hanya QRIS. Keranjang dikosongkan sebelum pembeli dibawa ke halaman bayar, supaya pesanan yang sama tidak terbuat dua kali |
+| 21 Nov 2026 | Webhook Midtrans memeriksa signature, lalu mengambil ulang status dari API Midtrans sebelum memanggil `apply_payment_notification` |
+| 21 Nov 2026 | Cek Pesanan dibatasi 10 percobaan per IP per jam |
 
 ---
 
@@ -717,7 +729,7 @@ Kontras teks memenuhi WCAG AA, target sentuh minimal 44 px, zoom tidak dikunci, 
 1. Skema database, RLS, fungsi `create_order`, aturan status, `pg_cron`, sebagai file migrasi di repo. Selesai 17 Nov 2026, 59 cek di `supabase/tests/uji_skema.sql` lolos.
 2. Katalog dan kartu kloter aktif di web. Selesai 17 Nov 2026: beranda, `/produk`, `/produk/[slug]`, dan semua keadaan kartu kloter (contohnya di `/styleguide#kloter`). Bagian halal ringkas dan FAQ di beranda menyusul bersama halamannya di langkah 6.
 3. Keranjang dan checkout dengan peta. Dibangun 17 Nov 2026: keranjang di HP pembeli terikat ke kloter yang buka, checkout dengan pin peta, captcha Turnstile, dan pemanggilan `create_order` lewat Server Action. Diuji dengan data contoh; uji ujung ke ujung menunggu `SUPABASE_SECRET_KEY` dan kloter percobaan. Setelah pesanan dibuat, untuk sementara tampil konfirmasi nomor pesanan dan batas bayar, karena tombol bayar dan halaman status masuk langkah 4.
-4. Midtrans Snap, webhook, halaman status, Cek Pesanan.
+4. Midtrans Snap, webhook, halaman status, Cek Pesanan. Dibangun 21 Nov 2026. Diuji: signature webhook (termasuk nominal yang diubah), semua keadaan halaman status dengan data contoh, Cek Pesanan, dan header keamanan. Uji ujung ke ujung menunggu `SUPABASE_SECRET_KEY`, kunci sandbox Midtrans, dan kloter percobaan.
 5. APK admin untuk kedua role.
 6. Halaman Halal & Keamanan Pangan, Kebijakan Privasi, Syarat Pemesanan, FAQ.
 7. Uji dari awal sampai akhir di Midtrans sandbox, jalankan Daftar Cek Sebelum Rilis (Bagian 14.4), lalu buka satu kloter percobaan dengan pembeli terbatas.

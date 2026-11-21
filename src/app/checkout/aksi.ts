@@ -1,7 +1,6 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { formatJamWib, formatTanggalWib } from "@/lib/format";
 import {
   periksaDataPesanan,
   terjemahkanGalatPesanan,
@@ -10,6 +9,7 @@ import {
   type MasukanPesanan,
 } from "@/lib/pesanan";
 import { ambilIpKlien, hashIp } from "@/lib/server/ip";
+import { siapkanTautanBayar } from "@/lib/server/pembayaran";
 import { panggilRpcAdmin } from "@/lib/server/supabase-admin";
 import { verifikasiTurnstile } from "@/lib/server/turnstile";
 import type { Database } from "@/types/database";
@@ -17,7 +17,8 @@ import type { Database } from "@/types/database";
 export type HasilCheckout =
   | { status: "awal" }
   | { status: "galat"; pesan: string; kolom: GalatKolom }
-  | { status: "berhasil"; invoice: string; total: number; batasBayar: string };
+  /** `tujuan`: halaman bayar Midtrans, atau halaman status kalau tautan bayarnya gagal dibuat. */
+  | { status: "lanjut"; tujuan: string };
 
 type PesananBaru = Database["public"]["Functions"]["create_order"]["Returns"][number];
 
@@ -105,12 +106,14 @@ export async function buatPesanan(_sebelumnya: HasilCheckout, form: FormData): P
     // Sisa kapasitas di kartu kloter langsung memperhitungkan pesanan ini.
     updateTag("kloter");
 
-    return {
-      status: "berhasil",
+    const urlBayar = await siapkanTautanBayar({
+      orderId: pesanan.order_id,
       invoice: pesanan.invoice_number,
       total: pesanan.total_amount,
-      batasBayar: `${formatTanggalWib(pesanan.expires_at)}, pukul ${formatJamWib(pesanan.expires_at)} WIB`,
-    };
+      batasBayar: pesanan.expires_at,
+      statusToken: pesanan.status_token,
+    });
+    return { status: "lanjut", tujuan: urlBayar ?? `/pesanan/${pesanan.status_token}` };
   } catch (galat) {
     console.error("[checkout] gagal:", galat instanceof Error ? galat.message : galat);
     return {

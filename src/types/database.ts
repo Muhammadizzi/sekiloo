@@ -55,6 +55,24 @@ export type Database = {
         }
         Relationships: []
       }
+      lookup_attempts: {
+        Row: {
+          created_at: string
+          id: number
+          ip_hash: string
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          ip_hash: string
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          ip_hash?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           id: string
@@ -125,6 +143,8 @@ export type Database = {
           recipient_name: string | null
           recipient_phone: string | null
           shipped_at: string | null
+          snap_redirect_url: string | null
+          snap_token: string | null
           status_token: string
           subtotal: number
           total_amount: number
@@ -158,6 +178,8 @@ export type Database = {
           recipient_name?: string | null
           recipient_phone?: string | null
           shipped_at?: string | null
+          snap_redirect_url?: string | null
+          snap_token?: string | null
           status_token?: string
           subtotal: number
           total_amount: number
@@ -191,6 +213,8 @@ export type Database = {
           recipient_name?: string | null
           recipient_phone?: string | null
           shipped_at?: string | null
+          snap_redirect_url?: string | null
+          snap_token?: string | null
           status_token?: string
           subtotal?: number
           total_amount?: number
@@ -550,6 +574,10 @@ export type Database = {
         Returns: number
       }
       batch_depart: { Args: { p_batch_id: string }; Returns: number }
+      cari_pesanan: {
+        Args: { p_invoice: string; p_ip_hash: string; p_phone: string }
+        Returns: string
+      }
       create_order: {
         Args: {
           p_address_note?: string
@@ -611,6 +639,14 @@ export type Database = {
         Returns: undefined
       }
       run_scheduled_jobs: { Args: never; Returns: undefined }
+      simpan_tautan_bayar: {
+        Args: {
+          p_order_id: string
+          p_redirect_url: string
+          p_snap_token: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

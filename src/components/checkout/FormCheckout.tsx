@@ -6,7 +6,6 @@ import { useActionState, useCallback, useEffect, useRef, useState, type FormEven
 
 import { buatPesanan, type HasilCheckout } from "@/app/checkout/aksi";
 import { useKloterSegar } from "@/components/kloter/useKloterSegar";
-import { CatatanPlaceholder } from "@/components/produk/CatatanPlaceholder";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody } from "@/components/ui/Card";
 import { PesanKeadaan } from "@/components/ui/PesanKeadaan";
@@ -86,7 +85,11 @@ export function FormCheckout({
   const ringkasanGalat = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (hasilKirim.status === "berhasil") kosongkanKeranjang();
+    // Keranjang dikosongkan sebelum pindah, supaya pesanan yang sama tidak terbuat dua kali saat pembeli kembali.
+    if (hasilKirim.status === "lanjut") {
+      kosongkanKeranjang();
+      window.location.assign(hasilKirim.tujuan);
+    }
     if (hasilKirim.status === "galat") ringkasanGalat.current?.focus();
   }, [hasilKirim]);
 
@@ -111,7 +114,7 @@ export function FormCheckout({
     if (siap) setCaptchaGagal(false);
   }, []);
 
-  if (hasilKirim.status === "berhasil") return <KonfirmasiPesanan hasil={hasilKirim} />;
+  if (hasilKirim.status === "lanjut") return <MenujuPembayaran tujuan={hasilKirim.tujuan} />;
 
   if (!status.bisa) {
     return (
@@ -405,7 +408,7 @@ export function FormCheckout({
           <Turnstile siteKey={siteKey} ulangi={hasilKirim} onSiap={saatCaptchaSiap} onGagal={saatCaptchaGagal} />
 
           <Button type="submit" size="lg" fullWidth loading={menunggu} disabled={!captchaSiap} className="mt-block">
-            {menunggu ? "Membuat pesanan…" : captchaSiap ? "Buat pesanan" : "Memeriksa keamanan…"}
+            {menunggu ? "Membuat pesanan…" : captchaSiap ? "Pesan dan bayar" : "Memeriksa keamanan…"}
           </Button>
           {captchaGagal && (
             <p role="alert" className="text-danger mt-2 text-sm">
@@ -413,7 +416,7 @@ export function FormCheckout({
             </p>
           )}
           <p className="text-content-muted mt-3 text-sm">
-            Setelah pesanan dibuat, tempatmu di kloter disimpan selama 15 menit sambil menunggu pembayaran.
+            Kamu akan dibawa ke halaman pembayaran QRIS. Tempatmu di kloter disimpan selama 15 menit sambil menunggu pembayaran.
           </p>
         </CardBody>
       </Card>
@@ -476,32 +479,17 @@ function BarisBiaya({ label, nilai, tebal = false }: { label: string; nilai: str
   );
 }
 
-function KonfirmasiPesanan({ hasil }: { hasil: Extract<HasilCheckout, { status: "berhasil" }> }) {
-  const judul = useRef<HTMLHeadingElement>(null);
-  useEffect(() => judul.current?.focus(), []);
-
+/** Tampil sesaat sebelum browser pindah ke halaman bayar. Tautannya tetap ada kalau perpindahan diblokir. */
+function MenujuPembayaran({ tujuan }: { tujuan: string }) {
   return (
     <Card variant="raised" className="mx-auto max-w-xl">
       <CardBody>
-        <h2 ref={judul} tabIndex={-1} className="text-content text-2xl font-semibold">
-          Pesanan dibuat
+        <h2 role="status" className="text-content text-2xl font-semibold">
+          Pesanan dibuat. Membuka halaman pembayaran…
         </h2>
-        <dl className="mt-block space-y-3">
-          <BarisBiaya label="Nomor pesanan" nilai={hasil.invoice} />
-          <BarisBiaya label="Total" nilai={formatRupiah(hasil.total)} tebal />
-          <div>
-            <dt className="text-content-soft">Bayar sebelum</dt>
-            <dd className="text-content mt-0.5 text-lg font-semibold">{hasil.batasBayar}</dd>
-          </div>
-        </dl>
-        <CatatanPlaceholder judul="tombol bayar QRIS menyusul" className="mt-block">
-          <p>
-            Pembayaran Midtrans dan halaman status pesanan dibuat di langkah 4. Sampai itu siap, pesanan ini batal
-            sendiri setelah batas bayarnya lewat.
-          </p>
-        </CatatanPlaceholder>
-        <Button href="/" variant="outline" className="mt-block">
-          Ke beranda
+        <p className="text-content-soft mt-2">Kalau halaman pembayaran tidak terbuka sendiri, tekan tombol di bawah.</p>
+        <Button href={tujuan} size="lg" className="mt-block">
+          Lanjut ke pembayaran
         </Button>
       </CardBody>
     </Card>

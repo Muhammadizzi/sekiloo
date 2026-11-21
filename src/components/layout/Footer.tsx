@@ -51,7 +51,10 @@ export function Footer() {
 
         <div className="border-ink-700 flex flex-col gap-2 border-t py-6 text-sm sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} Sealauk</p>
-          <nav aria-label="Kebijakan" className="flex gap-4">
+          <nav aria-label="Tautan lain" className="flex flex-wrap gap-x-4">
+            <Link href="/cek-pesanan" className="hover:text-on-dark inline-flex min-h-11 items-center underline-offset-4 hover:underline">
+              Cek pesanan
+            </Link>
             <Link href="/privasi" className="hover:text-on-dark inline-flex min-h-11 items-center underline-offset-4 hover:underline">
               Kebijakan Privasi
             </Link>

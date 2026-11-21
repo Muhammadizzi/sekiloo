@@ -9,6 +9,18 @@ const nextConfig: NextConfig = {
       ? [new URL("/storage/v1/object/public/product-images/**", supabaseUrl)]
       : [],
   },
+  async headers() {
+    return [
+      {
+        // Token di URL halaman status tidak boleh ikut terkirim ke situs lain lewat Referer (PRD 6.4).
+        source: "/pesanan/:token*",
+        headers: [
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
