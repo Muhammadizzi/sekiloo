@@ -1,0 +1,35 @@
+# Menjalankan cek otomatis Daftar Cek Sebelum Rilis (PRD Bagian 14.4) terhadap web yang sudah tayang,
+# setiap minggu dan bisa dijalankan manual dari tab Actions. Cek no. 2 dan 3 wajib diulang setiap migrasi.
+#
+# Butuh repository variable: SITE_URL (mis. https://sealauk.id), SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY.
+name: Cek rilis
+
+on:
+  schedule:
+    - cron: "5 2 * * 1" # setiap Senin 09.05 WIB
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cek:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 22
+      - name: Jalankan cek
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          if [ -z "$SITE_URL" ]; then
+            echo "::error::Repository variable SITE_URL belum diisi."
+            exit 1
+          fi
+          # Bundle browser dicek saat build lokal, karena runner ini tidak membangun web.
+          node scripts/cek-rilis.mjs --situs "$SITE_URL" --tanpa-bundle

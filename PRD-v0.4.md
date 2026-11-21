@@ -445,8 +445,8 @@ Supabase: Postgres + Auth (khusus admin) + Storage + pg_cron
 - Perubahan produk, kloter, dan wilayah memperbarui cache halaman lewat `revalidateTag`: setelah menyimpan, APK memanggil `/api/admin/segarkan` dengan token sesinya, dan web memeriksa token itu ke Supabase (`admin_role()`, wajib `aal2`) sebelum memperbarui cache. Data kapasitas kloter tidak di-cache lama.
 
 **Pengaman Supabase Free (dari v0.3):**
-- Database di-pause setelah seminggu tanpa aktivitas. Jeda antarkloter bisa lebih dari seminggu, jadi tugas harian GitHub Actions menjalankan satu query ringan.
-- Paket gratis tidak punya backup. Backup dibuat sendiri lewat GitHub Actions, dienkripsi, dan tidak disimpan di repo publik.
+- Database di-pause setelah seminggu tanpa aktivitas. Jeda antarkloter bisa lebih dari seminggu, jadi tugas harian GitHub Actions (`.github/workflows/jaga-supabase.yml`) memanggil `get_open_batch`. GitHub mematikan jadwal di repo publik setelah 60 hari tanpa commit, jadi email peringatan dari GitHub perlu ditanggapi.
+- Paket gratis tidak punya backup. Backup harian lewat GitHub Actions (`.github/workflows/backup.yml`): dump peran, skema, dan data, dienkripsi dengan age, lalu disimpan sebagai artefak 14 hari. Artefak repo publik bisa diunduh orang lain, tapi tanpa kunci privat age yang disimpan offline oleh pemilik, isinya tidak bisa dibuka. Backup tidak di-commit ke repo. File di Storage tidak ikut backup.
 
 ---
 
@@ -691,6 +691,8 @@ Kontras teks memenuhi WCAG AA, target sentuh minimal 44 px, zoom tidak dikunci, 
 | 21 Nov 2026 | Pengecekan sertifikat halal diarahkan ke halaman pencarian resmi BPJPH (`bpjph.halal.go.id/cari/sertifikat`), dengan nomor sertifikat ditampilkan di samping tombolnya |
 | 21 Nov 2026 | FAQ ditaruh di beranda (`/#faq`) memakai `<details>`, tanpa halaman terpisah. Pertanyaan halal hanya muncul kalau nomor sertifikat sudah diisi. Beranda juga mendapat ringkasan keamanan pangan, dan footer mendapat tautan Tanya jawab serta Halal & Keamanan Pangan |
 | 21 Nov 2026 | Kebijakan Privasi menyebut semua layanan pihak lain yang dipakai situs: Midtrans, Supabase, Netlify, Cloudflare Turnstile, OpenStreetMap, dan WhatsApp. Situs tidak memasang pelacak iklan atau analitik |
+| 21 Nov 2026 | Cek otomatis Daftar Cek Sebelum Rilis ada di `scripts/cek-rilis.mjs` (no. 3, 4 bagian pendaftaran, 5, 6, 9, 11, 15), dijalankan lokal dan setiap minggu lewat `.github/workflows/cek-rilis.yml`. Panduan uji sandbox dan cek manual di `docs/uji-rilis.md` |
+| 21 Nov 2026 | Uji sandbox memakai project Supabase yang sama dengan produksi. Kloter uji wajib berawalan "UJI", dan setelah uji dihapus dengan `supabase/scripts/bersihkan-data-uji.sql`, yang menolak menghapus kloter UJI yang masih berjalan dan tidak menyentuh kloter lain |
 
 ---
 
@@ -749,7 +751,7 @@ Kontras teks memenuhi WCAG AA, target sentuh minimal 44 px, zoom tidak dikunci, 
 4. Midtrans Snap, webhook, halaman status, Cek Pesanan. Dibangun 21 Nov 2026. Diuji: signature webhook (termasuk nominal yang diubah), semua keadaan halaman status dengan data contoh, Cek Pesanan, dan header keamanan. Uji ujung ke ujung menunggu `SUPABASE_SECRET_KEY`, kunci sandbox Midtrans, dan kloter percobaan.
 5. APK admin untuk kedua role. Dibangun 21 Nov 2026 di folder `admin/` (Expo SDK 58): login, 2FA TOTP, kunci sidik jari atau PIN, menu admin produksi (kloter, rekap, pesanan, refund, produk, wilayah) dan admin Cikarang (kloter, tandai tiba, daftar antar per kecamatan, aksi antar), serta tombol pesan WhatsApp. Diuji: 16 cek fungsi baca admin di `uji_skema.sql` (blok 4), semua layar dan alur di pratinjau web dengan data tiruan, bundel Android (`expo export`) tanpa kunci rahasia, dan endpoint `/api/admin/segarkan` menolak permintaan tanpa sesi admin. Belum diuji: login dan 2FA sungguhan (menunggu akun admin dan TOTP aktif di Supabase), kunci sidik jari, kamera, galeri, dan unggah foto di HP Android, serta build APK lewat EAS (menunggu akun Expo).
 6. Halaman Halal & Keamanan Pangan, Kebijakan Privasi, Syarat Pemesanan, FAQ. Dibangun 21 Nov 2026: `/halal`, `/privasi`, `/syarat` dengan daftar isi, serta ringkasan keamanan pangan dan tanya jawab di beranda. Diuji di HP (375 px) dan desktop, termasuk semua keadaan "data sudah diisi" dengan data contoh sementara. Sebelum pemesanan dibuka, pemilik wajib mengisi tiga file data di atas sampai tidak ada lagi catatan untuk pemilik yang tampil.
-7. Uji dari awal sampai akhir di Midtrans sandbox, jalankan Daftar Cek Sebelum Rilis (Bagian 14.4), lalu buka satu kloter percobaan dengan pembeli terbatas.
+7. Uji dari awal sampai akhir di Midtrans sandbox, jalankan Daftar Cek Sebelum Rilis (Bagian 14.4), lalu buka satu kloter percobaan dengan pembeli terbatas. Disiapkan 21 Nov 2026: skrip cek otomatis, workflow penjaga Supabase, backup terenkripsi, dan cek mingguan, skrip pembersih data uji (diuji dalam transaksi yang dibatalkan), serta panduan `docs/uji-rilis.md`. Cek otomatis terhadap build lokal: no. 2, 3, 5, 6, 11 lolos. No. 4 gagal karena pendaftaran akun Supabase masih terbuka, no. 9 menunggu `MIDTRANS_SERVER_KEY`, dan no. 15 menunggu data asli. Uji sandbox menunggu secret key Supabase, kunci sandbox Midtrans, deploy Netlify, akun admin, dan APK terpasang.
 
 **Fase 2:** testimoni, artikel, notifikasi WhatsApp resmi, video hero, notifikasi push APK, kuota per produk bila perlu.
 

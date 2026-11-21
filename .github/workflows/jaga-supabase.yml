@@ -1,0 +1,36 @@
+# Supabase Free mem-pause project setelah seminggu tanpa aktivitas, sedangkan jeda antarkloter bisa lebih
+# lama (PRD Bagian 13). Workflow ini memanggil satu fungsi baca publik setiap hari supaya project tetap aktif.
+#
+# Butuh repository variable (Settings > Secrets and variables > Actions > Variables):
+#   SUPABASE_URL              https://<project>.supabase.co
+#   SUPABASE_PUBLISHABLE_KEY  sb_publishable_... (memang publik, sama dengan yang ada di web)
+#
+# Catatan: GitHub mematikan jadwal workflow di repo publik setelah 60 hari tanpa commit. Kalau ada email
+# peringatan dari GitHub soal ini, aktifkan lagi di tab Actions.
+name: Jaga Supabase tetap aktif
+
+on:
+  schedule:
+    - cron: "17 1 * * *" # setiap hari 08.17 WIB
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Panggil get_open_batch
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_PUBLISHABLE_KEY" ]; then
+            echo "::error::Repository variable SUPABASE_URL dan SUPABASE_PUBLISHABLE_KEY belum diisi."
+            exit 1
+          fi
+          curl --fail-with-body --silent --show-error --max-time 30 \
+            -X POST "$SUPABASE_URL/rest/v1/rpc/get_open_batch" \
+            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "Content-Type: application/json" -d '{}' \
+            -o /dev/null -w "Supabase menjawab HTTP %{http_code}\n"

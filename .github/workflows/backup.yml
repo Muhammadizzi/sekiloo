@@ -1,0 +1,70 @@
+# Backup harian database Supabase, karena paket gratis tidak punya backup (PRD Bagian 13).
+#
+# Hasilnya dienkripsi dengan age sebelum meninggalkan runner. Repo ini publik, jadi artefak backup bisa
+# diunduh orang lain, tapi isinya hanya bisa dibuka dengan kunci privat age yang disimpan offline oleh pemilik.
+# Kunci privat itu tidak pernah masuk GitHub.
+#
+# Butuh:
+#   secret   SUPABASE_DB_URL       connection string Session pooler (Dashboard > Connect > Session pooler),
+#                                  karena runner GitHub tidak bisa memakai koneksi langsung yang IPv6.
+#   variable BACKUP_AGE_RECIPIENT  public key age (age1...). Buat dengan: age-keygen -o kunci-backup.txt
+#
+# Cara memulihkan ada di docs/uji-rilis.md (cek no. 14).
+name: Backup database terenkripsi
+
+on:
+  schedule:
+    - cron: "43 19 * * *" # setiap hari 02.43 WIB
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      BACKUP_AGE_RECIPIENT: ${{ vars.BACKUP_AGE_RECIPIENT }}
+    steps:
+      - name: Periksa konfigurasi
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::error::Secret SUPABASE_DB_URL belum diisi."
+            exit 1
+          fi
+          case "$BACKUP_AGE_RECIPIENT" in
+            age1*) ;;
+            *) echo "::error::Variable BACKUP_AGE_RECIPIENT belum berisi public key age (age1...)."; exit 1 ;;
+          esac
+
+      - uses: supabase/setup-cli@v3.2.0
+        with:
+          version: 3.2.0
+
+      - name: Dump peran, skema, dan data
+        run: |
+          mkdir dump
+          supabase db dump --remote="$SUPABASE_DB_URL" -f dump/roles.sql --role-only
+          supabase db dump --remote="$SUPABASE_DB_URL" -f dump/schema.sql
+          supabase db dump --remote="$SUPABASE_DB_URL" -f dump/data.sql --data-only --use-copy
+
+      - name: Enkripsi
+        run: |
+          sudo apt-get install -y --no-install-recommends age > /dev/null
+          nama="sealauk-$(date -u +%Y%m%d-%H%M).tar.gz.age"
+          tar -czf - -C dump . | age -r "$BACKUP_AGE_RECIPIENT" -o "$nama"
+          rm -rf dump
+          echo "Backup terenkripsi: $nama ($(du -h "$nama" | cut -f1))"
+
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: backup-${{ github.run_id }}
+          path: sealauk-*.tar.gz.age
+          retention-days: 14
+          if-no-files-found: error
