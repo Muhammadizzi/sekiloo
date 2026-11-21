@@ -1,5 +1,3 @@
-// Dibuat otomatis dari skema Supabase. Jangan diedit manual; buat ulang setelah ada migrasi baru.
-
 export type Json =
   | string
   | number
@@ -554,6 +552,89 @@ export type Database = {
         Returns: undefined
       }
       _require_admin: { Args: { p_roles: string[] }; Returns: string }
+      admin_daftar_antar: {
+        Args: { p_batch_id: string }
+        Returns: {
+          alamat: string
+          catatan_gagal: string
+          delivery_attempts: number
+          id: string
+          invoice_number: string
+          item: Json
+          kecamatan: string
+          lat: number
+          lng: number
+          nama_penerima: string
+          nomor_wa: string
+          order_status: string
+          patokan: string
+          status_token: string
+        }[]
+      }
+      admin_daftar_kloter: {
+        Args: never
+        Returns: {
+          cancel_reason: string
+          capacity_gram: number
+          close_order_at: string
+          delivery_date: string
+          id: string
+          lunas_berat_gram: number
+          lunas_jumlah: number
+          max_order_weight_gram: number
+          menunggu_bayar: number
+          min_orders: number
+          min_weight_gram: number
+          name: string
+          status: string
+          used_gram: number
+        }[]
+      }
+      admin_daftar_refund: {
+        Args: never
+        Returns: {
+          amount: number
+          created_at: string
+          id: string
+          invoice_number: string
+          nama_pemesan: string
+          nomor_wa: string
+          order_id: string
+          processed_at: string
+          proof_path: string
+          reason: string
+          status: string
+          status_token: string
+        }[]
+      }
+      admin_pesanan_kloter: {
+        Args: { p_batch_id: string }
+        Returns: {
+          cancel_reason: string
+          created_at: string
+          id: string
+          invoice_number: string
+          item: Json
+          nama_pemesan: string
+          nama_penerima: string
+          nomor_wa: string
+          order_status: string
+          payment_status: string
+          status_token: string
+          total_amount: number
+          total_weight_gram: number
+        }[]
+      }
+      admin_rekap_produksi: {
+        Args: { p_batch_id: string }
+        Returns: {
+          berat_gram: number
+          jumlah: number
+          nama: string
+          product_id: string
+          satuan: string
+        }[]
+      }
       admin_role: { Args: never; Returns: string }
       apply_payment_notification: {
         Args: {

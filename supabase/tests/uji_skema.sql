@@ -310,3 +310,107 @@ begin
   raise exception 'HASIL BLOK 3 (% gagal):%', (length(r) - length(replace(r, 'GAGAL', ''))) / 5, r;
 end;
 $uji$;
+
+
+-- Blok 4: fungsi baca APK admin dan batas data per peran (PRD Bagian 16)
+do $uji$
+declare
+  r text := '';
+  v text;
+  v_area uuid; v_a uuid; v_b uuid; v_batch uuid;
+  v_prod uuid := gen_random_uuid(); v_ckr uuid := gen_random_uuid();
+  o1 record; o2 record; o3 record; o4 record;
+begin
+  execute $f$
+    create function pg_temp.cek(p_label text, p_actual text, p_expected text) returns text language sql as $$
+      select case when p_actual is not distinct from p_expected
+        then format(E'\nOK     %s', p_label)
+        else format(E'\nGAGAL  %s: dapat %s, harusnya %s', p_label, coalesce(p_actual, 'null'), p_expected) end
+    $$
+  $f$;
+
+  insert into auth.users (id, aud, role, email) values
+    (v_prod, 'authenticated', 'authenticated', 'uji-produksi@contoh.test'),
+    (v_ckr, 'authenticated', 'authenticated', 'uji-cikarang@contoh.test');
+  insert into public.admin_roles (user_id, role, name) values
+    (v_prod, 'admin_produksi', 'Uji Produksi'), (v_ckr, 'admin_cikarang', 'Uji Cikarang');
+  insert into public.service_areas (name, delivery_fee, center_lat, center_lng, is_active)
+  values ('Uji Utara', 10000, -6.26, 107.15, true) returning id into v_area;
+  insert into public.products (slug, name, unit_type, net_weight_gram, ship_weight_gram, price, is_active, sort_order)
+  values ('uji-a', 'Uji A', 'ekor', 900, 1000, 50000, true, 1) returning id into v_a;
+  insert into public.products (slug, name, unit_type, net_weight_gram, ship_weight_gram, price, is_active, sort_order)
+  values ('uji-b', 'Uji B', 'bungkus', 200, 250, 20000, true, 2) returning id into v_b;
+  insert into public.po_batches (name, close_order_at, delivery_date, capacity_gram, max_order_weight_gram, min_weight_gram, min_orders)
+  values ('Kloter uji', now() + interval '1 day', (now() + interval '3 days')::date, 20000, 3000, 1000, 2) returning id into v_batch;
+
+  select * into o1 from public.create_order(v_batch, jsonb_build_array(jsonb_build_object('product_id', v_a, 'quantity', 1)), v_area, 'Satu', '6281200000001', 'Jl. Uji Nomor 1, Cikarang', -6.27, 107.15, true);
+  select * into o2 from public.create_order(v_batch, jsonb_build_array(jsonb_build_object('product_id', v_b, 'quantity', 2)), v_area, 'Dua', '6281200000002', 'Jl. Uji Nomor 2, Cikarang', -6.27, 107.15, true,
+    p_address_note => 'pagar hijau', p_recipient_name => 'Penerima Dua', p_recipient_phone => '6281200000099');
+  select * into o3 from public.create_order(v_batch, jsonb_build_array(jsonb_build_object('product_id', v_b, 'quantity', 1)), v_area, 'Tiga', '6281200000003', 'Jl. Uji Nomor 3, Cikarang', -6.27, 107.15, true);
+  select * into o4 from public.create_order(v_batch, jsonb_build_array(jsonb_build_object('product_id', v_b, 'quantity', 1)), v_area, 'Empat', '6281200000004', 'Jl. Uji Nomor 4, Cikarang', -6.27, 107.15, true);
+  perform public.apply_payment_notification(o1.invoice_number, 't1', 'settlement', o1.total_amount, now(), '{}');
+  perform public.apply_payment_notification(o2.invoice_number, 't2', 'settlement', o2.total_amount, now(), '{}');
+  perform public.apply_payment_notification(o4.invoice_number, 't4', 'expire', o4.total_amount, now(), '{}');
+  perform public.apply_payment_notification(o4.invoice_number, 't4b', 'settlement', o4.total_amount, now(), '{}');
+
+  set local role authenticated;
+  perform set_config('request.jwt.claims', json_build_object('sub', v_prod, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  select k.lunas_jumlah || '/' || k.lunas_berat_gram || '/' || k.menunggu_bayar || '/' || k.used_gram into v
+  from public.admin_daftar_kloter() k where k.id = v_batch;
+  r := r || pg_temp.cek('K1 ringkasan kloter (lunas/berat lunas/belum bayar/terpakai)', v, '2/1500/1/1750');
+  select string_agg(x.nama || '=' || x.jumlah || '/' || x.berat_gram, ', ' order by x.nama) into v from public.admin_rekap_produksi(v_batch) x;
+  r := r || pg_temp.cek('L1 rekap produksi hanya pesanan lunas', v, 'Uji A=1/1000, Uji B=2/500');
+  select count(*)::text into v from public.admin_pesanan_kloter(v_batch);
+  r := r || pg_temp.cek('M1 daftar pesanan kloter', v, '4');
+  select x.nama_penerima || '/' || x.nomor_wa || '/' || (x.item -> 0 ->> 'jumlah') into v from public.admin_pesanan_kloter(v_batch) x where x.id = o2.order_id;
+  r := r || pg_temp.cek('M2 label kemasan memakai nomor pemesan', v, 'Penerima Dua/6281200000002/2');
+  begin perform public.admin_daftar_antar(v_batch); v := 'diterima'; exception when others then v := sqlerrm; end;
+  r := r || pg_temp.cek('N1 admin produksi minta daftar antar', v, 'bukan_admin_yang_berwenang');
+
+  perform set_config('request.jwt.claims', json_build_object('sub', v_prod, 'role', 'authenticated', 'aal', 'aal1')::text, true);
+  begin perform public.admin_daftar_kloter(); v := 'diterima'; exception when others then v := sqlerrm; end;
+  r := r || pg_temp.cek('K2 admin tanpa 2FA', v, 'bukan_admin_yang_berwenang');
+
+  perform set_config('request.jwt.claims', json_build_object('sub', v_ckr, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  select count(*)::text into v from public.admin_daftar_kloter() k where k.id = v_batch;
+  r := r || pg_temp.cek('K3 admin Cikarang melihat kloter', v, '1');
+  begin perform public.admin_rekap_produksi(v_batch); v := 'diterima'; exception when others then v := sqlerrm; end;
+  r := r || pg_temp.cek('L2 admin Cikarang minta rekap produksi', v, 'bukan_admin_yang_berwenang');
+  begin perform public.admin_pesanan_kloter(v_batch); v := 'diterima'; exception when others then v := sqlerrm; end;
+  r := r || pg_temp.cek('M3 admin Cikarang minta daftar pesanan', v, 'bukan_admin_yang_berwenang');
+  begin perform public.admin_daftar_refund(); v := 'diterima'; exception when others then v := sqlerrm; end;
+  r := r || pg_temp.cek('O1 admin Cikarang minta daftar refund', v, 'bukan_admin_yang_berwenang');
+  begin perform public.admin_daftar_antar(v_batch); v := 'diterima'; exception when others then v := sqlerrm; end;
+  r := r || pg_temp.cek('N2 alamat sebelum kloter tiba', v, 'kloter_belum_tiba');
+
+  reset role;
+  perform set_config('request.jwt.claims', '', true);
+  update public.po_batches set close_order_at = now() - interval '1 hour', change_reason = 'uji tutup lebih awal' where id = v_batch;
+  perform public.run_scheduled_jobs();
+
+  set local role authenticated;
+  perform set_config('request.jwt.claims', json_build_object('sub', v_prod, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  perform public.batch_depart(v_batch);
+  select string_agg(x.invoice_number || '=' || x.amount, ', ') into v from public.admin_daftar_refund() x where x.order_id = o4.order_id;
+  r := r || pg_temp.cek('O2 refund tampil untuk admin produksi', v, o4.invoice_number || '=' || o4.total_amount);
+
+  perform set_config('request.jwt.claims', json_build_object('sub', v_ckr, 'role', 'authenticated', 'aal', 'aal2')::text, true);
+  perform public.batch_arrive(v_batch);
+  select string_agg(x.nama_penerima, ', ' order by x.nama_penerima) into v from public.admin_daftar_antar(v_batch) x;
+  r := r || pg_temp.cek('N3 daftar antar hanya pesanan yang tiba', v, 'Penerima Dua, Satu');
+  select x.nomor_wa || '/' || x.patokan || '/' || x.kecamatan || '/' || x.lat into v from public.admin_daftar_antar(v_batch) x where x.id = o2.order_id;
+  r := r || pg_temp.cek('N4 kontak dan titik penerima', v, '6281200000099/pagar hijau/Uji Utara/-6.27');
+  perform public.order_start_delivery(o1.order_id);
+  perform public.order_delivery_failed(o1.order_id, 'tidak_di_tempat');
+  select x.order_status || '/' || x.delivery_attempts || '/' || x.catatan_gagal into v from public.admin_daftar_antar(v_batch) x where x.id = o1.order_id;
+  r := r || pg_temp.cek('N5 alasan gagal antar terakhir', v, 'delivery_failed/1/tidak_di_tempat');
+
+  set local role anon;
+  begin perform public.admin_daftar_kloter(); v := 'diterima'; exception when others then v := sqlerrm; end;
+  r := r || pg_temp.cek('P1 publik panggil fungsi admin', v, 'permission denied for function admin_daftar_kloter');
+  reset role;
+  perform set_config('request.jwt.claims', '', true);
+
+  raise exception 'HASIL BLOK 4 (% gagal):%', (length(r) - length(replace(r, 'GAGAL', ''))) / 5, r;
+end;
+$uji$;

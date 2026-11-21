@@ -388,12 +388,16 @@ Angka suhu dan masa simpan hanya boleh diambil dari uji ketahanan produk, bukan 
 | `run_scheduled_jobs()` | `pg_cron`, tiap 5 menit | Membatalkan pesanan yang tidak dibayar, menutup atau membatalkan kloter yang lewat jam tutup, menandai kloter selesai |
 | `simpan_tautan_bayar(...)` | Server web | Menyimpan token dan tautan bayar Snap, hanya untuk pesanan yang masih menunggu bayar |
 | `cari_pesanan(...)` | Server web | Cek Pesanan: mengembalikan token status kalau nomor invoice dan nomor WhatsApp cocok, dengan batas percobaan per IP |
+| `admin_daftar_kloter()` | Kedua role | Semua kloter beserta jumlah dan berat pesanan lunas, pesanan menunggu bayar, dan berat terpakai |
+| `admin_rekap_produksi(batch)`, `admin_pesanan_kloter(batch)` | `admin_produksi` | Total per produk dari pesanan lunas, dan daftar pesanan untuk label kemasan: nama pemesan dan penerima, nomor WhatsApp pemesan, item. Tanpa alamat |
+| `admin_daftar_antar(batch)` | `admin_cikarang` | Alamat, patokan, koordinat, nomor penerima, dan alasan gagal antar terakhir. Ditolak (`kloter_belum_tiba`) sebelum kloter ditandai tiba |
+| `admin_daftar_refund()` | `admin_produksi` | Daftar refund, yang menunggu di atas, dengan nama dan nomor WhatsApp pemesan |
 
-Fungsi baca untuk APK (rekap produksi tanpa alamat, daftar antar untuk `admin_cikarang`) dibuat di langkah APK.
+Pesanan tertutup RLS untuk semua role, jadi APK membaca pesanan hanya lewat fungsi `admin_*` di atas. Setiap fungsi memeriksa peran dan sesi 2FA (`aal2`), dan hanya mengembalikan kolom yang boleh dilihat role itu (Bagian 16).
 
 Sejak migrasi `pembayaran_dan_cek_pesanan`, tabel, fungsi, dan sequence baru di skema `public` tidak lagi otomatis bisa diakses `anon` dan `authenticated`. Setiap migrasi wajib memberi `grant` secara eksplisit.
 
-**File di repo.** Migrasi di `supabase/migrations/`, data awal di `supabase/seed.sql`, uji fungsional di `supabase/tests/uji_skema.sql`. Tipe TypeScript dibuat otomatis dari skema ke `src/types/database.ts`.
+**File di repo.** Migrasi di `supabase/migrations/`, data awal di `supabase/seed.sql`, uji fungsional di `supabase/tests/uji_skema.sql`. Tipe TypeScript dibuat otomatis dari skema ke `src/types/database.ts`, lalu disalin ke `admin/src/types/database.ts` dengan `npm run salin-tipe` di folder `admin/`.
 
 **Penyimpanan file (Supabase Storage):**
 
@@ -420,6 +424,7 @@ Web pembeli: Next.js 16 di Netlify
 Midtrans --notifikasi--> /api/webhooks/midtrans --> Supabase
 
 APK admin (Expo) --login + 2FA--> Supabase (aksi lewat fungsi database)
+         \--token sesi admin--> /api/admin/segarkan (perbarui cache katalog web)
 
 Supabase: Postgres + Auth (khusus admin) + Storage + pg_cron
 ```
@@ -437,7 +442,7 @@ Supabase: Postgres + Auth (khusus admin) + Storage + pg_cron
 - Checkout memanggil fungsi database `create_order` (mengunci kapasitas), lalu membuat transaksi Midtrans.
 - Webhook Midtrans sesuai Bagian 10.2.
 - Halaman status dan Cek Pesanan dibaca server berdasarkan token, tidak dibuka lewat RLS ke publik.
-- Perubahan produk, kloter, dan wilayah memperbarui cache halaman lewat `revalidateTag`. Data kapasitas kloter tidak di-cache lama.
+- Perubahan produk, kloter, dan wilayah memperbarui cache halaman lewat `revalidateTag`: setelah menyimpan, APK memanggil `/api/admin/segarkan` dengan token sesinya, dan web memeriksa token itu ke Supabase (`admin_role()`, wajib `aal2`) sebelum memperbarui cache. Data kapasitas kloter tidak di-cache lama.
 
 **Pengaman Supabase Free (dari v0.3):**
 - Database di-pause setelah seminggu tanpa aktivitas. Jeda antarkloter bisa lebih dari seminggu, jadi tugas harian GitHub Actions menjalankan satu query ringan.
@@ -461,7 +466,7 @@ Prinsipnya: browser dan APK tidak pernah dipercaya untuk harga, ongkir, kapasita
 ### 14.2 Aturan wajib
 - `admin_roles` tidak punya aturan tulis untuk aplikasi mana pun. Role diubah hanya lewat dashboard Supabase.
 - Supabase Auth: pendaftaran dimatikan, 2FA (TOTP) wajib, dan semua aturan serta fungsi admin mengecek sesi `aal2`.
-- Kunci rahasia (`SUPABASE_SECRET_KEY`, `TURNSTILE_SECRET_KEY`, `IP_HASH_SALT`, `MIDTRANS_SERVER_KEY`, `REVALIDATION_SECRET`, dan nanti kunci API WhatsApp serta AI) hanya disimpan di environment variable Netlify. APK hanya membawa URL Supabase dan anon key. Setiap file yang memakai kunci rahasia diberi `import "server-only"`, supaya build langsung gagal kalau file itu terbawa ke browser.
+- Kunci rahasia (`SUPABASE_SECRET_KEY`, `TURNSTILE_SECRET_KEY`, `IP_HASH_SALT`, `MIDTRANS_SERVER_KEY`, dan nanti kunci API WhatsApp serta AI) hanya disimpan di environment variable Netlify. APK hanya membawa URL Supabase, publishable key, dan alamat web. Pembaruan cache dari APK memakai token sesi admin, jadi tidak perlu kunci rahasia bersama. Setiap file yang memakai kunci rahasia diberi `import "server-only"`, supaya build langsung gagal kalau file itu terbawa ke browser.
 - Anti-spam checkout: captcha tak terlihat (Cloudflare Turnstile) sejak MVP, maksimal 2 pesanan menunggu bayar per nomor WhatsApp, 5 checkout per IP per jam, 10 unit per produk, dan berat maksimal per pesanan (angka awal). Tanpa ini, seseorang bisa mengunci kapasitas dengan banyak pesanan yang tidak dibayar menjelang tutup PO. Pembeli asli jadi tidak bisa memesan, dan kloter bisa jatuh di bawah minimum lalu batal.
 - Upload foto (produk, bukti antar, testimoni): hanya JPG, PNG, atau WEBP, maksimal 2 MB, dicek dari isi file (bukan nama file), diproses ulang, dan metadata EXIF dibuang. Foto dari HP bisa menyimpan lokasi GPS rumah. Foto bukti antar dan bukti refund disimpan di bucket privat (Bagian 12).
 - APK: dikunci sidik jari atau PIN setiap dibuka, dan aksi sensitif (refund, batalkan kloter atau pesanan, ubah jadwal) wajib verifikasi ulang. 2FA hanya melindungi saat login, bukan sesi yang sudah aktif di HP yang hilang. Keystore di-backup, file APK dibagikan lewat link privat. Kalau HP admin hilang: ganti password, keluarkan semua perangkat, reset 2FA.
@@ -674,6 +679,13 @@ Kontras teks memenuhi WCAG AA, target sentuh minimal 44 px, zoom tidak dikunci, 
 | 21 Nov 2026 | Pembayaran memakai Midtrans Snap mode redirect, hanya QRIS. Keranjang dikosongkan sebelum pembeli dibawa ke halaman bayar, supaya pesanan yang sama tidak terbuat dua kali |
 | 21 Nov 2026 | Webhook Midtrans memeriksa signature, lalu mengambil ulang status dari API Midtrans sebelum memanggil `apply_payment_notification` |
 | 21 Nov 2026 | Cek Pesanan dibatasi 10 percobaan per IP per jam |
+| 21 Nov 2026 | APK admin dibuat sebagai proyek Expo SDK 58 terpisah di folder `admin/` (npm, tsconfig dan lint sendiri). Pesanan dibaca lewat fungsi `admin_*` yang membatasi kolom per role, bukan lewat RLS tabel |
+| 21 Nov 2026 | Login APK: email dan password, lalu peran di `admin_roles` dicek sebelum 2FA, supaya akun yang bukan admin tidak sempat mendaftarkan authenticator. Pendaftaran 2FA lewat tombol buka authenticator atau kode rahasia yang diketik, tanpa kode QR |
+| 21 Nov 2026 | Sesi APK disimpan di Keystore Android (SecureStore), dipotong ke beberapa entri karena batas ukuran per entri. APK terkunci sidik jari atau PIN setiap dibuka dan setelah lebih dari 1 menit di latar belakang. Jeda 1 menit itu supaya admin bisa membuka WhatsApp, peta, atau kamera di tengah pekerjaan. HP tanpa kunci layar tidak bisa memakai APK |
+| 21 Nov 2026 | Verifikasi ulang sidik jari atau PIN untuk: menandai refund selesai, membatalkan kloter, membatalkan pesanan, dan mengubah jadwal kloter yang sudah berisi pesanan lunas |
+| 21 Nov 2026 | Jadwal kloter dipilih dari deretan tanggal dan jam bulat WIB, bukan diketik. Setelah jadwal kloter berpesanan lunas diubah, APK langsung menampilkan daftar pembeli yang perlu dikabari lewat WhatsApp |
+| 21 Nov 2026 | Foto dari APK (produk, bukti antar, bukti transfer) digambar ulang ke WebP lebar maksimal 1600 px sebelum diunggah, sehingga EXIF dan lokasi GPS terbuang |
+| 21 Nov 2026 | Cache katalog web diperbarui dari APK lewat `/api/admin/segarkan` dengan token sesi admin. `REVALIDATION_SECRET` tidak dipakai |
 
 ---
 
@@ -692,7 +704,7 @@ Kontras teks memenuhi WCAG AA, target sentuh minimal 44 px, zoom tidak dikunci, 
 8. Wilayah layanan: seluruh kecamatan, atau hanya area tertentu? Batas peta di database sementara berupa kotak perkiraan (lintang -6,43 sampai -6,20, bujur 107,03 sampai 107,28), dan titik tengah tiap kecamatan juga perkiraan. Keduanya wajib dicek di peta sebelum rilis.
 
 **Kebijakan:**
-9. Gagal antar karena pembeli: di-refund atau tidak?
+9. Gagal antar karena pembeli: di-refund atau tidak? Sampai diputuskan, admin Cikarang memilih "dengan refund" atau "tanpa refund" saat membatalkan pesanan yang gagal diantar dua kali.
 10. Perubahan jadwal kloter: boleh refund atas permintaan pembeli?
 11. Target lama refund (misalnya 3 hari kerja).
 12. Masa simpan data pembeli (usulan 12 bulan).
@@ -730,7 +742,7 @@ Kontras teks memenuhi WCAG AA, target sentuh minimal 44 px, zoom tidak dikunci, 
 2. Katalog dan kartu kloter aktif di web. Selesai 17 Nov 2026: beranda, `/produk`, `/produk/[slug]`, dan semua keadaan kartu kloter (contohnya di `/styleguide#kloter`). Bagian halal ringkas dan FAQ di beranda menyusul bersama halamannya di langkah 6.
 3. Keranjang dan checkout dengan peta. Dibangun 17 Nov 2026: keranjang di HP pembeli terikat ke kloter yang buka, checkout dengan pin peta, captcha Turnstile, dan pemanggilan `create_order` lewat Server Action. Diuji dengan data contoh; uji ujung ke ujung menunggu `SUPABASE_SECRET_KEY` dan kloter percobaan. Setelah pesanan dibuat, untuk sementara tampil konfirmasi nomor pesanan dan batas bayar, karena tombol bayar dan halaman status masuk langkah 4.
 4. Midtrans Snap, webhook, halaman status, Cek Pesanan. Dibangun 21 Nov 2026. Diuji: signature webhook (termasuk nominal yang diubah), semua keadaan halaman status dengan data contoh, Cek Pesanan, dan header keamanan. Uji ujung ke ujung menunggu `SUPABASE_SECRET_KEY`, kunci sandbox Midtrans, dan kloter percobaan.
-5. APK admin untuk kedua role.
+5. APK admin untuk kedua role. Dibangun 21 Nov 2026 di folder `admin/` (Expo SDK 58): login, 2FA TOTP, kunci sidik jari atau PIN, menu admin produksi (kloter, rekap, pesanan, refund, produk, wilayah) dan admin Cikarang (kloter, tandai tiba, daftar antar per kecamatan, aksi antar), serta tombol pesan WhatsApp. Diuji: 16 cek fungsi baca admin di `uji_skema.sql` (blok 4), semua layar dan alur di pratinjau web dengan data tiruan, bundel Android (`expo export`) tanpa kunci rahasia, dan endpoint `/api/admin/segarkan` menolak permintaan tanpa sesi admin. Belum diuji: login dan 2FA sungguhan (menunggu akun admin dan TOTP aktif di Supabase), kunci sidik jari, kamera, galeri, dan unggah foto di HP Android, serta build APK lewat EAS (menunggu akun Expo).
 6. Halaman Halal & Keamanan Pangan, Kebijakan Privasi, Syarat Pemesanan, FAQ.
 7. Uji dari awal sampai akhir di Midtrans sandbox, jalankan Daftar Cek Sebelum Rilis (Bagian 14.4), lalu buka satu kloter percobaan dengan pembeli terbatas.
 

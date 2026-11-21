@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Claude Code skill scripts, not part of the app:
     ".claude/**",
+    // APK admin punya proyek Expo, tsconfig, dan lint sendiri:
+    "admin/**",
   ]),
 ]);
 
